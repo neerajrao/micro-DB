@@ -1,0 +1,35 @@
+region : 5 : 
+( region : r_name : 5) 
+( region : r_regionkey : 5) 
+nation : 25 : 
+( nation : n_regionkey : 5) 
+( nation : n_nationkey : 25) 
+supplier : 10000 : 
+( supplier : s_suppkey : 10000) 
+( supplier : s_nationkey : 25) 
+( supplier : s_acctbal : 21) 
+orders : 1500000 : 
+( orders : o_orderkey : 1500000) 
+( orders : o_totalprice : 150000) 
+( orders : o_custkey : 150000) 
+part : 200000 : 
+( part : p_size : 50) 
+( part : p_partkey : 200000) 
+( part : p_container : 40) 
+customer : 150000 : 
+( customer : c_mktsegment : 5) 
+( customer : c_name : 20) 
+( customer : c_nationkey : 25) 
+( customer : c_custkey : 150000) 
+lineitem : 6001215 : 
+( lineitem : l_discount : 11) 
+( lineitem : l_returnflag : 11) 
+( lineitem : l_orderkey : 1500000) 
+( lineitem : l_partkey : 200000) 
+( lineitem : l_quantity : 10) 
+( lineitem : l_returnflag : 3) 
+( lineitem : l_shipinstruct : 4) 
+( lineitem : l_shipmode : 7) 
+partsupp : 800000 : 
+( partsupp : ps_suppkey : 10000) 
+( partsupp : ps_partkey : 200000) 

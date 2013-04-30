@@ -1,0 +1,73 @@
+(q1)
+
+SELECT SUM (ps.ps_supplycost)
+FROM part AS p, supplier AS s, partsupp AS ps
+WHERE (p.p_partkey = ps.ps_partkey) AND
+	  (s.s_suppkey = ps.ps_suppkey) AND
+	  (s.s_acctbal > 2500.0)
+
+ANSWER: 2.74243e+08 (5.91 sec)
+
+============================================================
+(q2)
+
+SELECT SUM (c.c_acctbal)
+FROM customer AS c, orders AS o
+WHERE (c.c_custkey = o.o_custkey) AND
+	  (o.o_totalprice < 10000.0)
+
+ANSWER: 1.33123e+08 (17.31 sec)
+
+============================================================
+(q3)
+
+SELECT l.l_orderkey, l.l_partkey, l.l_suppkey
+FROM lineitem AS l
+WHERE (l.l_returnflag = 'R') AND (l.l_discount < 0.04 OR l.l_shipmode = 'MAIL') AND (l.l_orderkey > 5000) AND (l.l_orderkey < 6000)
+
+ANSWER: 109 rows in set (17.47 sec)
+
+===========================================================
+(q4)
+
+SELECT ps.ps_partkey, ps.ps_suppkey, ps.ps_availqty
+FROM partsupp AS ps
+WHERE (ps.ps_partkey < 100) AND (ps.ps_suppkey < 50)
+
+ANSWER: 48 rows (1.95 sec)
+
+==========================================================
+(q5)
+
+SELECT SUM (l.l_discount)
+FROM customer AS c, orders AS o, lineitem AS l
+WHERE (c.c_custkey = o.o_custkey) AND
+	  (o.o_orderkey = l.l_orderkey) AND
+	  (c.c_name = 'Customer#000070919') AND
+	  (l.l_quantity > 30.0) AND (l.l_discount < 0.03)
+
+ANSWER: 0.0075 (55.4 sec)
+===========================================================
+(q6)
+
+SELECT DISTINCT s.s_name
+FROM supplier AS s, part AS p, partsupp AS ps
+WHERE (s.s_suppkey = ps.ps_suppkey) AND
+	  (p.p_partkey = ps.ps_partkey) AND
+	  (p.p_mfgr = 'Manufacturer#4') AND
+	  (ps.ps_supplycost < 350.0)
+
+
+ANSWER: 9964 rows (1.51 sec)
+===========================================================
+(q7)
+
+SELECT SUM (l.l_extendedprice * (1 - l.l_discount)), l.l_orderkey, o.o_orderdate, o.o_shippriority
+FROM customer AS c, orders AS o, lineitem AS l
+WHERE (c.c_mktsegment = 'BUILDING') AND
+      (c.c_custkey = o.o_custkey) AND (l.l_orderkey = o.o_orderkey) AND
+	  (l.l_orderkey < 100 OR l.l_orderkey < 100)
+GROUP BY l_orderkey, o_orderdate, o_shippriority
+
+ANSWER: 7 rows (41.2 sec)
+===========================================================
