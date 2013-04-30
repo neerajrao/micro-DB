@@ -59,7 +59,7 @@ public:
 
   // used to merge two schemas. Added in project 4.2 so we can merge the schema
   // resulting from a Join operation
-  void mergeSchema(Schema* s);
+  Schema* mergeSchema(Schema* s);
 
   ~Schema ();
 

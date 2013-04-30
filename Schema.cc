@@ -60,13 +60,14 @@ Schema :: Schema (char *fpath, int num_atts, Attribute *atts) {
   }
 }
 
-void Schema ::mergeSchema(Schema* s){
-  numAtts=numAtts+s->GetNumAtts();
-  Attribute *ori =myAtts;
-  myAtts=new Attribute[numAtts];
-  Attribute *atts=s->GetAtts();
+Schema* Schema ::mergeSchema(Schema* s){
+  int base=GetNumAtts();
+  int numAtts=this->numAtts+s->GetNumAtts();
+  Attribute *ori =this->myAtts;
+  Attribute *myAtts=new Attribute[numAtts];
+  Attribute *atts=ori;
   int i ;
-  for ( i = 0;i < s->GetNumAtts(); i++ ) {
+  for ( i = 0;i < base; i++ ) {
     if (atts[i].myType == Int) {
       myAtts[i].myType = Int;
     }
@@ -84,8 +85,8 @@ void Schema ::mergeSchema(Schema* s){
     myAtts[i].name = strdup (atts[i].name);
   }
 
-  atts=ori;
-  int base=s->GetNumAtts();
+  atts=s->GetAtts();
+
   for (; i < numAtts; i++ ) {
     if (atts[i-base].myType == Int) {
       myAtts[i].myType = Int;
@@ -103,8 +104,10 @@ void Schema ::mergeSchema(Schema* s){
     }
     myAtts[i].name = strdup (atts[i-base].name);
   }
-  delete []atts;
+  return new Schema (fileName, numAtts, myAtts);
 }
+
+
 
 Schema :: Schema (char *fName, char *relName) {
 

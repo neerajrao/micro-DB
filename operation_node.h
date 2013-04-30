@@ -224,8 +224,6 @@ class ProjectNode : virtual public GenericQTreeNode {
   public:
     ProjectNode(NameList *atts, GenericQTreeNode* &root, int& pipeIDcounter){
       // There was no project attribute in the input CNF; no need to add a ProjectNode to the query tree
-      if(!atts)
-        return;
 
       GenericQTreeNode();
       left = root;
@@ -374,8 +372,7 @@ class SumNode : virtual public GenericQTreeNode {
   public:
     SumNode(FuncOperator *funcOperator, GenericQTreeNode* &root, int& pipeIDcounter){
       // There was no sum clause in the input CNF; no need to add a SumNode to the query tree
-      if(!funcOperator)
-        return;
+
 
       GenericQTreeNode();
       left = root;
@@ -445,38 +442,52 @@ class JoinNode : virtual public GenericQTreeNode {
     string RelName0, RelName1;
     Record literal;
     CNF cnf_pred;
+    Join J;
 
   public:
-    JoinNode(struct AndList &dummy, string &RelName0, string &RelName1, unordered_map<string, GenericQTreeNode*> &relNameToTreeMap, int pipeIDcounter){
+    JoinNode(struct AndList &dummy, string &RelName0, string &RelName1, unordered_map<string,GenericQTreeNode*> &NameTreeMapping, int pipeIDcounter){
       GenericQTreeNode();
       this->RelName0 = RelName0;
       this->RelName1 = RelName1;
-      GenericQTreeNode* lSubT = NULL, *rSubT = NULL;
-      // if tree structure already exist for att name, retrieve the subtree.
-      if(relNameToTreeMap.count(RelName0))
-      lSubT = relNameToTreeMap[RelName0];
-      if(relNameToTreeMap.count(RelName1))
-      rSubT = relNameToTreeMap[RelName1];
+      GenericQTreeNode* lSubT=NULL,*rSubT=NULL;
 
-      // connect the tree structure. update the name-treeNode pointer hash.
-      left = lSubT;
-      right = rSubT;
-      relNameToTreeMap[RelName0] = this;
+      // if tree structure already exist for att name, retrieve the subtree.
+      if(NameTreeMapping.count(RelName0))
+        lSubT=NameTreeMapping[RelName0];
+      else
+        // create a new selectfilenode with empty CNF for the left
+      if(NameTreeMapping.count(RelName1))
+        rSubT=NameTreeMapping[RelName1];
+      else
+        // create a new selectfilenode with empty CNF for the left
+
+      //connect the tree structure. update the name-treeNode pointer hash.
+      left=lSubT;
+      right=rSubT;
+      NameTreeMapping[RelName0]=this;
+      NameTreeMapping[RelName1]=this;
 
       // the right attribute will be joined (eliminated). delete the right attribute's subtree if it exists.
-      if(relNameToTreeMap.count(RelName1))
-        relNameToTreeMap.erase(RelName1);
+      if(NameTreeMapping.count(RelName1))
+        NameTreeMapping.erase(RelName1);
 
-      if(right)
-        rschema->mergeSchema(right->schema());
-      else
-        rschema->mergeSchema(DBinfo[RelName1]->schema());
+      rschema=left->schema();
+      rschema=rschema->mergeSchema(right->schema());
 
-      pipeID = pipeIDcounter;
+      pipeID=pipeIDcounter;
 
       // create the CNF form schema.
-      cnf_pred.GrowFromParseTree (&dummy, rel->schema(), literal);
+      cnf_pred.GrowFromParseTree (&dummy, rschema, literal);
     };
+
+    void Run(){
+      J.Use_n_Pages (buffsz);
+      J.Run(*(left->outpipe),*(right->outpipe),*outpipe,cnf_pred,literal);
+    };
+
+    void WaitUntilDone(){
+      J.WaitUntilDone ();
+    }
 
     Schema* schema () {
       return rschema;
@@ -510,8 +521,7 @@ class Group_byNode : virtual public GenericQTreeNode {
   private:
     NameList *Gatts;
   public:
-    Group_byNode(NameList *n, GenericQTreeNode* &root, int& pipeIDcounter){
-      if(!n) return;
+    Group_byNode(NameList *n, FuncOperator *funcOperator, GenericQTreeNode* &root, int& pipeIDcounter){
       GenericQTreeNode();
       left = root;
       root = this;

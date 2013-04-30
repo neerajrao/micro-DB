@@ -209,7 +209,7 @@ int Statistics :: evalComparisonOp(struct ComparisonOp *pCom, char **relNames, i
 
     // SELECTION
     if (numToJoin == 1 || ((pCom->left->code == NAME ) != (pCom->right->code == NAME))) { // if numToJoin == 1 or only one OPerand is Name.
-      // cout << "selection operation" << endl; // diagnostic
+      // cout << "selection operation" << endl; //diagnostic
       // one of the attribute is NAME. store the NAME in att.
       string att = (pCom->left->code == NAME) ? string(pCom->left->value) : string(pCom->right->value);
 
@@ -236,24 +236,24 @@ int Statistics :: evalComparisonOp(struct ComparisonOp *pCom, char **relNames, i
         Relation_Size_Atts[string(relNames[lastHandledRel])].second[att]=1;
 
         // cache the attribute value pair, modify the cnfDuplicateFoundFlag, sameAndAttDiffValue and orSameAttDiffValue to direct decision in evalOr and evalAnd
-        if(writeFlag){ // this is a singleton AND statement , cache and att/value pair
+        if(writeFlag){ //this is a singleton AND statement , cache and att/value pair
           if(andEqualCache.count(att)){
-            if(andEqualCache[att]==value)cnfDuplicateFoundFlag=true; // find a duplicate, the AND should have no effect.
+            if(andEqualCache[att]==value)cnfDuplicateFoundFlag=true; //find a duplicate, the AND should have no effect.
             else {
-              sameAndAttDiffValue=true; // no duplicates, the AND result should be zero.
-              Relation_Size_Atts.erase(string(relNames[lastHandledRel])); // delete this relation because everything in this relation to be zero.
+              sameAndAttDiffValue=true; //no duplicates, the AND result should be zero.
+              Relation_Size_Atts.erase(string(relNames[lastHandledRel])); //delete this relation because everything in this relation to be zero.
             }
           }
-          else andEqualCache[att]=value;    // this attribute is a new attribute to evalADD
+          else andEqualCache[att]=value;    //this attribute is a new attribute to evalADD
         }
-        else {// a singleton OR statement  , cache or att/value pair
-          if(!orEqualCache.count(att)) // this attribute is a new attribute to evalOR
+        else {//a singleton OR statement  , cache or att/value pair
+          if(!orEqualCache.count(att)) //this attribute is a new attribute to evalOR
             orEqualCache.insert({att,value});
           else{
             auto range = orEqualCache.equal_range(att);
             auto it=find_if (range.first,range.second,stringCMP(att));
-            if(it!=range.second) cnfDuplicateFoundFlag=true;  // find a duplicate then don't include in evalOr
-            else orSameAttDiffValue=true;                     // no duplicates, set add directly flag for evalOR
+            if(it!=range.second) cnfDuplicateFoundFlag=true;  //find a duplicate then don't include in evalOr
+            else orSameAttDiffValue=true;                     //no duplicates, set add directly flag for evalOR
           }
         }
       }
@@ -403,7 +403,7 @@ int Statistics::evalOrList(struct OrList *pOr, char **relNames, int numToJoin,do
     for(int i = 0;i<numToJoin;i++)
       temp[i] = Relation_Size_Atts[relNames[i]].first;
 
-    // if pOr->rightOr is NULL, then perform write operation
+    //if pOr->rightOr is NULL, then perform write operation
     bool orSameAttDiffValue=false;
     // (pOr->rightOr==NULL&&ListOrSingleton)
     // pOr->rightOr==NULL true for a singleton OR clause e.g. singleton OR clause is (a = b)
@@ -413,9 +413,9 @@ int Statistics::evalOrList(struct OrList *pOr, char **relNames, int numToJoin,do
     delete []temp;
     double nominator = Dresult;
 
-    // aggregate the result.
-    if(orSameAttDiffValue && !cnfDuplicateFoundFlag) ORDresult = ORDresult + nominator;  // not seen equal selection on a already seen attribute
-    else if(!orSameAttDiffValue && !cnfDuplicateFoundFlag)                               // normal case equi-join or an equal selection on a not seen attribute
+    //aggregate the result.
+    if(orSameAttDiffValue && !cnfDuplicateFoundFlag) ORDresult = ORDresult + nominator;  //not seen equal selection on a already seen attribute
+    else if(!orSameAttDiffValue && !cnfDuplicateFoundFlag)                               //normal case equi-join or an equal selection on a not seen attribute
       ORDresult = ORDresult+nominator-ORDresult/denominator*nominator;
 
     if (pOr->rightOr) {
@@ -441,7 +441,7 @@ int Statistics :: evalAndList(struct AndList *pAnd, char **relNames, int numToJo
     double ORDresult = 0;
     struct OrList *pOr = pAnd->left;
 
-    bool ListOrSingleton=true; // ListOrSingleton true; when OR clause begins. false when the OR clause ends
+    bool ListOrSingleton=true; //ListOrSingleton true; when OR clause begins. false when the OR clause ends
     bool cnfDuplicateFoundFlag=false;
     bool sameAndAttDiffValue=false;
     int ind = evalOrList(pOr, relNames, numToJoin,ORDresult,ListOrSingleton,cnfDuplicateFoundFlag,sameAndAttDiffValue);
@@ -449,10 +449,10 @@ int Statistics :: evalAndList(struct AndList *pAnd, char **relNames, int numToJo
 
 
 
-    // write back the result after every OR operation.
+    //write back the result after every OR operation.
 //    cout<<endl<<"ind "<<ind<<" Name "<<relNames[ind]<<endl;
     Relation_Size_Atts[relNames[ind]].first=(int)ORDresult;
-    // aggregation.
+    //aggregation.
     if(sameAndAttDiffValue){ // if two different-valued equal selections are being applied on the
                              // same attribute, the result relation has zero attributes.
                              // e.g. (l_orderkey = 1) AND (l_orderkey = 2)
@@ -460,7 +460,7 @@ int Statistics :: evalAndList(struct AndList *pAnd, char **relNames, int numToJo
       return ind;
     }
     else
-      ANDDresult = ORDresult;  // normal case
+      ANDDresult = ORDresult;  //normal case
 
     if (pAnd->rightAnd) {
       ind = evalAndList(pAnd->rightAnd, relNames, numToJoin,ANDDresult,flag);
