@@ -17,11 +17,11 @@
  * to the caller in sorted order
  ******************************************************************************/
 
-// Source: http://stackoverflow.com/a/12068218
+// Source: http:// stackoverflow.com/a/12068218
 typedef std::priority_queue<MergeStruct, vector<MergeStruct>, PQCompare > myPQ;
 
 // Generate a random string as a name for our temporary file
-// Source: http://stackoverflow.com/a/440240
+// Source: http:// stackoverflow.com/a/440240
 // Also used in RelOp.cc joinRoutine
 void gen_random_string(char *s, const int len) {
   static const char alphanum[] =
@@ -207,7 +207,7 @@ void* workerRoutine(void* ptr){
 
     // cout << "file has pages " << currFile->GetLength()-1 << endl; // - 1 coz GetLength() adds 1 for metadata
 
-    //priority_queue <MergeStruct, vector<MergeStruct>, PQCompare(orderMaker)>  pq; // priority queue for phase 2
+    // priority_queue <MergeStruct, vector<MergeStruct>, PQCompare(orderMaker)>  pq; // priority queue for phase 2
     myPQ pq(PQCompare(myT->sortOrder)); // priority queue for phase 2
 
     /*
@@ -303,8 +303,8 @@ BigQ :: BigQ (Pipe &in, Pipe &out, OrderMaker &sortorder, int runlen) {
 BigQ::~BigQ () {
 }
 
-//int QSortCompare(const void* left, const void* right){ // used by qsort for sorting
-//}
+// int QSortCompare(const void* left, const void* right){ // used by qsort for sorting
+// }
 
 /*******************************************************************************
  * END OF FILE

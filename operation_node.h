@@ -461,7 +461,7 @@ class JoinNode : virtual public GenericQTreeNode {
       else
         // create a new selectfilenode with empty CNF for the left
 
-      //connect the tree structure. update the name-treeNode pointer hash.
+      // connect the tree structure. update the name-treeNode pointer hash.
       left=lSubT;
       right=rSubT;
       NameTreeMapping[RelName0]=this;

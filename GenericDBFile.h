@@ -43,7 +43,7 @@ class GenericDBFile {
 
     virtual int GetNumofRecordPages() = 0;
 
-    virtual ~GenericDBFile(){}; //even a pure virtual destructor MUST have an implementation. So we provide an empty impl. right here.
+    virtual ~GenericDBFile(){}; // even a pure virtual destructor MUST have an implementation. So we provide an empty impl. right here.
 };
 
 #endif

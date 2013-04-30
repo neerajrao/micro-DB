@@ -256,8 +256,8 @@ int CNF :: createQueryOrder (OrderMaker &sortOrder, OrderMaker &queryOrder) {
           break;
         }
 
-        //cout << "cnf.createqueryorder " << j << " " << orList[i][0].operand1 << " " << orList[i][0].operand2 << " " << orList[i][0].whichAtt1 << " " << orList[i][0].attType << endl;
-        //cout << "cnf.createqueryorder " << j << " " << sortOrder.whichAtts[j] << " " << sortOrder.whichTypes[j] << endl;
+        // cout << "cnf.createqueryorder " << j << " " << orList[i][0].operand1 << " " << orList[i][0].operand2 << " " << orList[i][0].whichAtt1 << " " << orList[i][0].attType << endl;
+        // cout << "cnf.createqueryorder " << j << " " << sortOrder.whichAtts[j] << " " << sortOrder.whichTypes[j] << endl;
 
         // check that this attribute of the query CNF (the CNF object this method
         // is being called upon) is also present in the sortOrder

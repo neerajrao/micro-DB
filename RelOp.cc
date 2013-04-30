@@ -61,7 +61,7 @@ void* selectPipeRoutine(void* ptr){
   Record currRec;
   ComparisonEngine ceng;
   while(myT->inputPipe->Remove(&currRec)!=0){ // keep reading from the input pipe as long it has elements in it
-    if(ceng.Compare(&currRec,myT->literal,myT->cnf)==1){ //push to output pipe if we have equality
+    if(ceng.Compare(&currRec,myT->literal,myT->cnf)==1){ // push to output pipe if we have equality
       myT->outputPipe->Insert(&currRec);
     }
   }
@@ -237,7 +237,7 @@ void* joinRoutine(void* ptr){
     Record smallerRelRec,smallerRelRecBackup;
 
     while(myT->inputPipeL->Remove(&smallerRelRec)){ // add all smaller relation tuples to the dbfile
-      //smallerRelRec.Print(new Schema("catalog","supplier"));
+      // smallerRelRec.Print(new Schema("catalog","supplier"));
       smallerRelRecBackup.Copy(&smallerRelRec);
       dbfile->Add(smallerRelRec);
     }
@@ -560,7 +560,7 @@ void* duplicateRemovalRoutine(void* ptr){
   // Create BigQ with an ordermaker that includes ALL the attributes in the tuple handed to us
   OrderMaker* allAttrsOrderMaker = new OrderMaker(myT->schema);
 
-  //now create the BigQ IN A NEW THREAD so we don't block this one
+  // now create the BigQ IN A NEW THREAD so we don't block this one
   CreateBigQUtil* t = new CreateBigQUtil;
   t->inputPipe = myT->inputPipe;
   t->outputPipe = &coupling;
@@ -581,7 +581,7 @@ void* duplicateRemovalRoutine(void* ptr){
       firstRecRead = true;
     }
     else{
-      if(ceng.Compare(&firstRec,&secondRec,allAttrsOrderMaker)!=0){ //NOT a duplicate
+      if(ceng.Compare(&firstRec,&secondRec,allAttrsOrderMaker)!=0){ // NOT a duplicate
         firstRec.Copy(&secondRec);
         myT->outputPipe->Insert(&secondRec);
       }
@@ -625,18 +625,18 @@ void* sumRoutine(void* ptr){
   while(myT->inputPipe->Remove(&currRec)!=0){ // keep reading from the input pipe as long it has elements in it
     type = myT->func->Apply(currRec,tempInt,tempDouble);
     if(type == Int){
-      //cout << totalSumInt << " + " << tempInt;
+      // cout << totalSumInt << " + " << tempInt;
       totalSumInt += tempInt;
-      //cout << " " << totalSumInt << endl;
+      // cout << " " << totalSumInt << endl;
     }
     else if(type == Double){
-      //cout << totalSumDouble << " + " << tempDouble;
+      // cout << totalSumDouble << " + " << tempDouble;
       totalSumDouble += tempDouble;
-      //cout << " " << totalSumDouble << endl;
+      // cout << " " << totalSumDouble << endl;
     }
   }
 
-  //create a new tuple that contains the sum we wanted
+  // create a new tuple that contains the sum we wanted
   char* mySum = new char[100];
   Schema* outSchema;
   if(type == Int){
@@ -645,7 +645,7 @@ void* sumRoutine(void* ptr){
     outRec.ComposeRecord(outSchema,mySum);
   }
   else if(type == Double){
-    //cout << totalSumDouble << endl;
+    // cout << totalSumDouble << endl;
     outSchema = new Schema("out_sch", 1, &DA);
     sprintf(mySum,"%f|",totalSumDouble);
     outRec.ComposeRecord(outSchema,mySum);
@@ -753,11 +753,11 @@ void* groupByRoutine(void* ptr){
 
   GroupByUtil* myT = (GroupByUtil*) ptr;
 
-  //now create the BigQ IN A NEW THREAD so we don't block this one
+  // now create the BigQ IN A NEW THREAD so we don't block this one
   CreateBigQUtil* t = new CreateBigQUtil;
   t->inputPipe = myT->inputPipe;
   t->outputPipe = &bigQtoSumCoupling;
-  t->orderMaker = myT->orderMaker; //make bigQ sort ONLY by the fields we're grouping on
+  t->orderMaker = myT->orderMaker; // make bigQ sort ONLY by the fields we're grouping on
   t->runlen = myT->runlen;
   pthread_t createBigQThread, clearOutputVecThread;
   pthread_create(&createBigQThread,NULL,createBigQRoutine,(void*)t);
@@ -800,12 +800,12 @@ void* groupByRoutine(void* ptr){
   while(bigQtoSumCoupling.Remove(&secondRec)!=0){ // keep reading from bigQ's output pipe as long it has elements in it
     if(!firstRecRead){
       firstRec.Copy(&secondRec);
-      sumInputPipe->Insert(&secondRec); //put the record into Sum so it can add it to its running total
+      sumInputPipe->Insert(&secondRec); // put the record into Sum so it can add it to its running total
       firstRecRead = true;
     }
     else{
-      if(ceng.Compare(&firstRec,&secondRec,myT->orderMaker)==0){ //this record is part of the same group as the last
-        sumInputPipe->Insert(&secondRec); //put the record into Sum so it can add it to its running total
+      if(ceng.Compare(&firstRec,&secondRec,myT->orderMaker)==0){ // this record is part of the same group as the last
+        sumInputPipe->Insert(&secondRec); // put the record into Sum so it can add it to its running total
       }
       else{
         // wait for Sum to finish adding up all the elements for this group. For
@@ -878,7 +878,7 @@ void* writeOutRoutine(void* ptr){
   Record currRec;
 
   while(myT->inputPipe->Remove(&currRec)!=0){ // keep reading from the input pipe as long it has elements in it
-    currRec.PrintToFile(myT->outFile,myT->schema); //write to file
+    currRec.PrintToFile(myT->outFile,myT->schema); // write to file
   }
 
   return 0;

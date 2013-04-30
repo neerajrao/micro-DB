@@ -8,7 +8,7 @@
  * Created on April 22, 2013, 4:38 PM
  */
 #ifndef a4_2UTILS_H
-#define	a4_2UTILS_H
+#define  a4_2UTILS_H
 
 #include <iostream>
 #include "ParseTree.h"
@@ -22,31 +22,31 @@
 
 using namespace std;
 
-//extern variable and function from yyac.
+// extern variable and function from yyac.
 extern "C" {
-	int yyparse(void); // defined in y.tab.c
+  int yyparse(void); // defined in y.tab.c
 }
 
 extern "C"  struct FuncOperator *finalFunction; // the aggregate function (NULL if no agg)
-extern "C"	struct TableList *tables; // the list of tables and aliases in the query
-extern "C"	struct AndList *whereClausePredicate; // the predicate in the WHERE clause
-extern "C"	struct NameList *groupingAtts; // grouping atts (NULL if no grouping)
-extern "C"	struct NameList *attsToSelect; // the set of attributes in the SELECT (NULL if no such atts)
-extern "C"	int distinctAtts; // 1 if there is a DISTINCT in a non-aggregate query
-extern "C"	int distinctFunc;  // 1 if there is a DISTINCT in an aggregate query
+extern "C"  struct TableList *tables; // the list of tables and aliases in the query
+extern "C"  struct AndList *whereClausePredicate; // the predicate in the WHERE clause
+extern "C"  struct NameList *groupingAtts; // grouping atts (NULL if no grouping)
+extern "C"  struct NameList *attsToSelect; // the set of attributes in the SELECT (NULL if no such atts)
+extern "C"  int distinctAtts; // 1 if there is a DISTINCT in a non-aggregate query
+extern "C"  int distinctFunc;  // 1 if there is a DISTINCT in an aggregate query
 
-//variable defined by Guang
-extern "C"	struct SchemaList *schemas; // the list of tables and aliases in the query
-extern "C"	struct NameList *bulkFileName; // bulk loading file name string
-extern "C"	struct NameList *outputFileName; // output file name or STDOUT string
-extern "C"	int commandFlag; // 1 if the command is a create table command.
-			                       // 2 if the command is a Insert into command
-                      			 // 3 if the command is a drop table command
-                      			 // 4 if the command is a set output command
-                      			 // 5 if the command is a SQL command
+// variable defined by Guang
+extern "C"  struct SchemaList *schemas; // the list of tables and aliases in the query
+extern "C"  struct NameList *bulkFileName; // bulk loading file name string
+extern "C"  struct NameList *outputFileName; // output file name or STDOUT string
+extern "C"  int commandFlag; // 1 if the command is a create table command.
+                             // 2 if the command is a Insert into command
+                             // 3 if the command is a drop table command
+                             // 4 if the command is a set output command
+                             // 5 if the command is a SQL command
 extern "C"  int NumAtt;
 
-GenericQTreeNode* QueryRoot; //after executing queryPlanning, the root should be saved here!!
+GenericQTreeNode* QueryRoot; // after executing queryPlanning, the root should be saved here!!
 // Serialized form of the Statistics object
 char *fileName = "Statistics.txt";
 
@@ -199,7 +199,7 @@ void AndListNode2QTreeNode(struct AndList &dummy, char* RelName[], int numToJoin
   // schema itself does not store the "." part so we must remove it here so that the Schema can find a match.
   ConvertOrList(dummy.left);
 
-  if(numToJoin == 1){ //selection operation
+  if(numToJoin == 1){ // selection operation
     // The corresponding tree node already exists, it is a selection_pipe operation
     if(relNameToTreeMap.count(leftRelName))
       NewQNode = new Selection_PNode(dummy, leftRelName, relNameToTreeMap, pipeIDcounter);
@@ -214,7 +214,7 @@ void AndListNode2QTreeNode(struct AndList &dummy, char* RelName[], int numToJoin
   else
     cerr << "ERROR: Join must have two input relations!!!" << endl;
 
-  //update the relNameToTreeMap, store back new treeNode/subtree pointer.
+  // update the relNameToTreeMap, store back new treeNode/subtree pointer.
   relNameToTreeMap[leftRelName]=NewQNode;
 }
 

@@ -9,7 +9,7 @@
 using namespace std;
 
 // Generate a random string as a name for our temporary file
-// Source: http://stackoverflow.com/a/440240
+// Source: http:// stackoverflow.com/a/440240
 extern void gen_random_string(char *s, const int len); // defined in BigQ.cc
 
 // With a couple of exceptions, operations always get their data from input pipes and put the
@@ -30,7 +30,7 @@ class RelationalOp {
 
   protected:
     pthread_t operationThread;
-    Record currRec; //used as temporary storage for comparisons etc.
+    Record currRec; // used as temporary storage for comparisons etc.
     int numPages;
     int bnlPages; // only used for BNL joins
 

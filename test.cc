@@ -238,7 +238,7 @@ void q4 () {
   Schema join_sch ("join_sch", outAtts, joinatt);
 
   Join J;
-  J.Use_n_Pages (buffsz); //this was missing in the original test.cc. Use_n_Pages MUST be called for Join, DuplicateRemoval and GroupBy
+  J.Use_n_Pages (buffsz); // this was missing in the original test.cc. Use_n_Pages MUST be called for Join, DuplicateRemoval and GroupBy
   J.Run (_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
 
   Sum T;
@@ -297,7 +297,7 @@ void q5 () {
 
   SF_ps.Run (dbf_ps, _ps, cnf_ps, lit_ps);
   P_ps.Run (_ps, __ps, keepMe, numAttsIn, numAttsOut);
-  D.Use_n_Pages (buffsz); //this was missing in the original test.cc. Use_n_Pages MUST be called for Join, DuplicateRemoval and GroupBy
+  D.Use_n_Pages (buffsz); // this was missing in the original test.cc. Use_n_Pages MUST be called for Join, DuplicateRemoval and GroupBy
   D.Run (__ps, ___ps,__ps_sch);
   W.Run (___ps, writefile, __ps_sch);
 
@@ -377,8 +377,8 @@ void q6 () {
   OrderMaker grp_order;
   grp_order.initOrderMaker(1,myAtts);
 
-  J.Use_n_Pages (buffsz); //this was missing in the original test.cc. Use_n_Pages MUST be called for Join, DuplicateRemoval and GroupBy
-  G.Use_n_Pages (buffsz); //this was missing in the original test.cc. Use_n_Pages MUST be called for Join, DuplicateRemoval and GroupBy
+  J.Use_n_Pages (buffsz); // this was missing in the original test.cc. Use_n_Pages MUST be called for Join, DuplicateRemoval and GroupBy
+  G.Use_n_Pages (buffsz); // this was missing in the original test.cc. Use_n_Pages MUST be called for Join, DuplicateRemoval and GroupBy
   J.Run (_s, _ps, _s_ps, cnf_p_ps, lit_p_ps);
   G.Run (_s_ps, _out, grp_order, func);
 
@@ -491,7 +491,7 @@ void q9 () {
   Schema join_sch ("join_sch", outAtts, joinatt);
 
   Join J;
-  J.Use_n_Pages (buffsz); //this was missing in the original test.cc. Use_n_Pages MUST be called for Join, DuplicateRemoval and GroupBy
+  J.Use_n_Pages (buffsz); // this was missing in the original test.cc. Use_n_Pages MUST be called for Join, DuplicateRemoval and GroupBy
   J.Run (_s, _n, _s_n, cnf_s_n, lit_s_n);
 
   Sum T;
