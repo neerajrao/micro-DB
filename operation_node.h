@@ -134,12 +134,14 @@ class Selection_PNode : virtual public GenericQTreeNode {
     };
 
     void Run(){
+      // cout << "selectpipe started" << endl; //debug
       SP.Use_n_Pages (buffsz);
       SP.Run (*(left->outpipe), *outpipe, cnf_pred, literal); // Select Pipe takes its input from its left child's
                                                               // outPipe. Its right child is NULL.
     };
 
     void WaitUntilDone(){
+      // cout << "selectpipe ended" << endl; //debug
       SP.WaitUntilDone ();
     }
 };
@@ -195,6 +197,7 @@ class Selection_FNode : virtual public GenericQTreeNode {
     };
 
     void Run(){
+      // cout << "selectfile started" << endl; //debug
       dbfile.Open (rel->path());
       dbfile.MoveFirst();
       SF.Use_n_Pages (buffsz);
@@ -202,6 +205,7 @@ class Selection_FNode : virtual public GenericQTreeNode {
     };
 
     void WaitUntilDone(){
+      // cout << "selectfile ended" << endl; //debug
       SF.WaitUntilDone ();
       dbfile.Close();
     }
@@ -214,7 +218,7 @@ class Selection_FNode : virtual public GenericQTreeNode {
  ******************************************************************************/
 class ProjectNode : virtual public GenericQTreeNode {
   private:
-    NameList *atts;
+    NameList PAtts; // will be used for printing in Print()
     Project P;
 
     // variables that will be passed to the Project object in
@@ -230,7 +234,9 @@ class ProjectNode : virtual public GenericQTreeNode {
       left = root;
       root = this;
 
-      this->atts = atts;
+      PAtts = *atts; // will be used for printing in Print()
+      NameList tempNameList = *atts; // create a temporary copy of atts because it will be destroyed
+                                     // when we walk it to determine atts below
 
       pipeID = pipeIDcounter;
       pipeIDcounter++; // increment for next guy
@@ -245,23 +251,24 @@ class ProjectNode : virtual public GenericQTreeNode {
       vector <int> temp;
       vector <Type> tempType; // will be used below to prune inschema
       vector <char*> tempName; // will be used below to prune inschema
+      NameList* tempL = &tempNameList;
       do{
         // if the input attribute has the relation name prepended along with a dot,
         // remove it
-        char* dotStripped = strpbrk(atts->name, ".")+1;
+        char* dotStripped = strpbrk(tempL->name, ".")+1;
         if(dotStripped!=NULL){ // there was a dot and we removed the prefix
-          atts->name = dotStripped;
+          tempL->name = dotStripped;
           temp.push_back(inschema->Find(dotStripped));
           tempType.push_back(inschema->FindType(dotStripped));
           tempName.push_back(dotStripped);
         }
         else{ // there was no dot; use the name as-is
-          temp.push_back(inschema->Find(atts->name));
-          tempType.push_back(inschema->FindType(atts->name));
-          tempName.push_back(atts->name);
+          temp.push_back(inschema->Find(tempL->name));
+          tempType.push_back(inschema->FindType(tempL->name));
+          tempName.push_back(tempL->name);
         }
-        atts = atts->next;
-      }while(atts);
+        tempL = tempL->next;
+      }while(tempL);
       numAttsOut = temp.size();
       keepMe = new int[numAttsOut]();
       Attribute* tempAttArray = new Attribute[numAttsOut](); // will be used below to prune inschema
@@ -291,17 +298,19 @@ class ProjectNode : virtual public GenericQTreeNode {
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
       cout << "Project Attributes:" << endl << "    ";
-      printNameList(atts);
+      printNameList(&PAtts);
       cout << "****************" << endl;
     };
 
     void Run(){
+      // cout << "project started" << endl; //debug
       P.Use_n_Pages (buffsz);
       P.Run (*(left->outpipe), *outpipe, keepMe, numAttsIn, numAttsOut); // Project takes its input from its left child's
                                                                          // outPipe. Its right child is NULL.
     };
 
     void WaitUntilDone(){
+      // cout << "project ended" << endl; //debug
       P.WaitUntilDone ();
     }
 };
@@ -349,12 +358,14 @@ class DupRemNode : virtual public GenericQTreeNode {
     };
 
     void Run(){
+      // cout << "dupremoval started" << endl; //debug
       D.Use_n_Pages (buffsz);
       D.Run (*(left->outpipe), *outpipe, *rschema); // DuplicateRemoval takes its input from its left child's
                                                     // outPipe. Its right child is NULL.
     };
 
     void WaitUntilDone(){
+      // cout << "dupremoval ended" << endl; //debug
       D.WaitUntilDone ();
     }
 
@@ -423,12 +434,14 @@ class SumNode : virtual public GenericQTreeNode {
     };
 
     void Run(){
+      // cout << "sum started" << endl; //debug
       S.Use_n_Pages (buffsz);
       S.Run (*(left->outpipe), *outpipe, Func); // Sum takes its input from its left child's
                                                     // outPipe. Its right child is NULL.
     };
 
     void WaitUntilDone(){
+      // cout << "sum ended" << endl; //debug
       S.WaitUntilDone ();
     }
 
@@ -527,12 +540,14 @@ class Group_byNode : virtual public GenericQTreeNode {
     };
 
     void Run(){
+      // cout << "groupby started" << endl; //debug
       G.Use_n_Pages (buffsz);
       G.Run (*(left->outpipe), *outpipe, grp_order, Func); // GroupBy takes its input from its left child's
                                                            // outPipe. Its right child is NULL.
     };
 
     void WaitUntilDone(){
+      // cout << "groupby ended" << endl; //debug
       G.WaitUntilDone ();
     }
 

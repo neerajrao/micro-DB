@@ -493,12 +493,13 @@ void queryExecution(){
 
   // Run() ALL the nodes before you call WaitUntilDone() on ANY of them
   PostOrderRun(QueryRoot);
-  PostOrderWait(QueryRoot);
 
   // At this point, all the nodes have been Run() and are waiting in WaitUntilDone()
   // We must, therefore, start clearing the root node's output pipe so data can
   // start flowing upwards through the tree
   int cnt = clear_pipe (*(QueryRoot->outpipe), QueryRoot->schema(), true);
+
+  PostOrderWait(QueryRoot);
 
   cout << "\nQuery returned " << cnt << " records \n";
   cout << endl << "--------------------" << endl;
