@@ -33,8 +33,8 @@ void PrintOutputSchema(Schema* s){
   cout << "Output Schema: " << endl;
   for(int i = 0;i<s->GetNumAtts();i++){
     Attribute *att = s->GetAtts();
-    // cout << "    " << att[i].name << ": ";
-    cout << "    Att" << (i+1) << ": ";
+    cout << "    " << att[i].name << ": ";
+    // cout << "    Att" << (i+1) << ": ";
     switch(att[i].myType){
       case 0:
         cout << "Int" << endl;
@@ -124,7 +124,8 @@ class Selection_PNode : virtual public GenericQTreeNode {
     void Print(){
       cout << endl;
       cout << "***************************" << endl;
-      cout << "Select Pipe Operation" << endl;
+      cout << "   SELECT PIPE OPERATION" << endl;
+      cout << "   ---------------------" << endl;
       cout << "Input pipe ID: " << left->pipeID << endl;
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(left->schema());
@@ -188,7 +189,8 @@ class Selection_FNode : virtual public GenericQTreeNode {
     void Print(){
       cout << endl;
       cout << "***************************" << endl;
-      cout << "Select File Operation" << endl;
+      cout << "   SELECT FILE OPERATION" << endl;
+      cout << "   ---------------------" << endl;
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rel->schema());
       cout << "CNF: " << endl << "    ";
@@ -293,7 +295,8 @@ class ProjectNode : virtual public GenericQTreeNode {
     void Print(){
       cout << endl;
       cout << "***************************" << endl;
-      cout << "Projection Operation" << endl;
+      cout << "   PROJECTION OPERATION" << endl;
+      cout << "   --------------------" << endl;
       cout << "Input pipe ID: " << left->pipeID << endl;
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
@@ -350,7 +353,8 @@ class DupRemNode : virtual public GenericQTreeNode {
     void Print(){
       cout << endl;
       cout << "***************************" << endl;
-      cout << "Duplicate Removal Operation" << endl;
+      cout << "DUPLICATE REMOVAL OPERATION" << endl;
+      cout << "---------------------------" << endl;
       cout << "Input pipe ID: " << left->pipeID << endl;
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
@@ -424,7 +428,8 @@ class SumNode : virtual public GenericQTreeNode {
     void Print(){
       cout << endl;
       cout << "***************************" << endl;
-      cout << "Sum Operation" << endl;
+      cout << "       SUM OPERATION" << endl;
+      cout << "       -------------" << endl;
       cout << "Input pipe ID: " << left->pipeID << endl;
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
@@ -530,7 +535,8 @@ class Group_byNode : virtual public GenericQTreeNode {
     void Print(){
       cout << endl;
       cout << "***************************" << endl;
-      cout << "GroupBy Operation" << endl;
+      cout << "     GROUP BY OPERATION" << endl;
+      cout << "     ------------------" << endl;
       cout << "Input pipe ID: " << left->pipeID << endl;
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
@@ -649,7 +655,8 @@ class JoinNode : virtual public GenericQTreeNode {
     void Print(){
       cout << endl;
       cout << "***************************" << endl;
-      cout << "Join Operation" << endl;
+      cout << "      JOIN OPERATION" << endl;
+      cout << "      --------------" << endl;
       cout << "Input pipe 1 ID: " << left->pipeID << endl;
       cout << "Input pipe 2 ID: " << right->pipeID << endl;
       cout << "Output pipe ID: " << pipeID << endl;
