@@ -135,14 +135,14 @@ class Selection_PNode : virtual public GenericQTreeNode {
     };
 
     void Run(){
-      // cout << "selectpipe started" << endl; //debug
+      // cout << "selectpipe started" << endl; // debug
       SP.Use_n_Pages (buffsz);
       SP.Run (*(left->outpipe), *outpipe, cnf_pred, literal); // Select Pipe takes its input from its left child's
                                                               // outPipe. Its right child is NULL.
     };
 
     void WaitUntilDone(){
-      // cout << "selectpipe ended" << endl; //debug
+      // cout << "selectpipe ended" << endl; // debug
       SP.WaitUntilDone ();
     }
 };
@@ -199,7 +199,7 @@ class Selection_FNode : virtual public GenericQTreeNode {
     };
 
     void Run(){
-      // cout << "selectfile started" << endl; //debug
+      // cout << "selectfile started" << endl; // debug
       dbfile.Open (rel->path());
       dbfile.MoveFirst();
       SF.Use_n_Pages (buffsz);
@@ -207,7 +207,7 @@ class Selection_FNode : virtual public GenericQTreeNode {
     };
 
     void WaitUntilDone(){
-      // cout << "selectfile ended" << endl; //debug
+      // cout << "selectfile ended" << endl; // debug
       SF.WaitUntilDone ();
       dbfile.Close();
     }
@@ -306,14 +306,14 @@ class ProjectNode : virtual public GenericQTreeNode {
     };
 
     void Run(){
-      // cout << "project started" << endl; //debug
+      // cout << "project started" << endl; // debug
       P.Use_n_Pages (buffsz);
       P.Run (*(left->outpipe), *outpipe, keepMe, numAttsIn, numAttsOut); // Project takes its input from its left child's
                                                                          // outPipe. Its right child is NULL.
     };
 
     void WaitUntilDone(){
-      // cout << "project ended" << endl; //debug
+      // cout << "project ended" << endl; // debug
       P.WaitUntilDone ();
     }
 };
@@ -362,14 +362,14 @@ class DupRemNode : virtual public GenericQTreeNode {
     };
 
     void Run(){
-      // cout << "dupremoval started" << endl; //debug
+      // cout << "dupremoval started" << endl; // debug
       D.Use_n_Pages (buffsz);
       D.Run (*(left->outpipe), *outpipe, *rschema); // DuplicateRemoval takes its input from its left child's
                                                     // outPipe. Its right child is NULL.
     };
 
     void WaitUntilDone(){
-      // cout << "dupremoval ended" << endl; //debug
+      // cout << "dupremoval ended" << endl; // debug
       D.WaitUntilDone ();
     }
 
@@ -439,14 +439,14 @@ class SumNode : virtual public GenericQTreeNode {
     };
 
     void Run(){
-      // cout << "sum started" << endl; //debug
+      // cout << "sum started" << endl; // debug
       S.Use_n_Pages (buffsz);
       S.Run (*(left->outpipe), *outpipe, Func); // Sum takes its input from its left child's
                                                     // outPipe. Its right child is NULL.
     };
 
     void WaitUntilDone(){
-      // cout << "sum ended" << endl; //debug
+      // cout << "sum ended" << endl; // debug
       S.WaitUntilDone ();
     }
 
@@ -546,14 +546,14 @@ class Group_byNode : virtual public GenericQTreeNode {
     };
 
     void Run(){
-      // cout << "groupby started" << endl; //debug
+      // cout << "groupby started" << endl; // debug
       G.Use_n_Pages (buffsz);
       G.Run (*(left->outpipe), *outpipe, grp_order, Func); // GroupBy takes its input from its left child's
                                                            // outPipe. Its right child is NULL.
     };
 
     void WaitUntilDone(){
-      // cout << "groupby ended" << endl; //debug
+      // cout << "groupby ended" << endl; // debug
       G.WaitUntilDone ();
     }
 
@@ -579,6 +579,7 @@ class JoinNode : virtual public GenericQTreeNode {
 
       // LEFT CHILD
       if(!relNameToTreeMap.count(RelName0)){
+        // cout << RelName0 << " not in map; creating selectfile" << endl; // debug
         // this relation has not been encountered before this Join. Create a SelectFile Node
         // with an empty CNF (equivalent to a "Select *") to pipe in its input. 
         GenericQTreeNode* NewQNode;
@@ -596,6 +597,7 @@ class JoinNode : virtual public GenericQTreeNode {
 
       // RIGHT CHILD
       if(!relNameToTreeMap.count(RelName1)){
+        // cout << RelName1 << " not in map; creating selectfile" << endl; // debug
         // this relation has not been encountered before this Join. Create a SelectFile Node
         // with an empty CNF (equivalent to a "Select *") to pipe in its input. 
         GenericQTreeNode* NewQNode;
@@ -624,6 +626,7 @@ class JoinNode : virtual public GenericQTreeNode {
       if(relNameToTreeMap.count(RelName1))
         relNameToTreeMap.erase(RelName1);
 
+      // create the schema that will be used for parents of this node
       rschema=left->schema();
       rschema=rschema->mergeSchema(right->schema());
 
@@ -632,18 +635,6 @@ class JoinNode : virtual public GenericQTreeNode {
       // create the CNF from schema.
       cnf_pred.GrowFromParseTree (&dummy, left->schema(), right->schema(), literal);
     };
-
-    void Run(){
-      // cout << "join started" << endl; //debug
-      J.Use_n_Pages (buffsz);
-      J.Run(*(left->outpipe),*(right->outpipe),*outpipe,cnf_pred,literal); // Join takes its input from its left and
-                                                                           // right children's outpipes
-    };
-
-    void WaitUntilDone(){
-      // cout << "join ended" << endl; //debug
-      J.WaitUntilDone ();
-    }
 
     Schema* schema () {
       return rschema;
@@ -665,6 +656,19 @@ class JoinNode : virtual public GenericQTreeNode {
       cnf_pred.Print();
       cout << "***************************" << endl;
     };
+
+    void Run(){
+      // cout << "join started" << endl; // debug
+      J.Use_n_Pages (buffsz);
+      J.Run(*(left->outpipe),*(right->outpipe),*outpipe,cnf_pred,literal); // Join takes its input from its left and
+                                                                           // right children's outpipes
+    };
+
+    void WaitUntilDone(){
+      // cout << "join ended" << endl; // debug
+      J.WaitUntilDone ();
+    }
+
 };
 
 #endif

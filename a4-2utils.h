@@ -191,24 +191,30 @@ void ConvertOrList(struct OrList *pOr) {
  *----------------------------------------------------------------------------*/
 void AndListNode2QTreeNode(struct AndList &dummy, char* RelName[], int numToJoin, int& pipeIDcounter){
   // cout << RelName[0] << " " << RelName[1] << " " << numToJoin << endl; // debug
-  string leftRelName(RelName[0]), rightRelName;
+  string leftRelName(RelName[0]), rightRelName; // debug
   GenericQTreeNode* NewQNode;
   // update the string in dummy to attribute name alone without "." because the constructors
   // for the tree nodes in operation_node.h call cnf_pred.GrowFromParseTree (&dummy, re->schema(), literal) i.e.,
   // GrowFromParseTree will use dummy along with the Schema to create the CNF that can be printed out. However, the
   // schema itself does not store the "." part so we must remove it here so that the Schema can find a match.
   ConvertOrList(dummy.left);
+  // PrintAndList(&dummy); // debug
 
   if(numToJoin == 1){ // selection operation
     // The corresponding tree node already exists, it is a selection_pipe operation
-    if(relNameToTreeMap.count(leftRelName))
+    if(relNameToTreeMap.count(leftRelName)){
+      // cout << leftRelName << " already in map" << endl; // debug
       NewQNode = new Selection_PNode(dummy, leftRelName, relNameToTreeMap, pipeIDcounter);
+    }
     // The first selection performed on a relation is a SelectFile.
-    else
+    else{
+      // cout << leftRelName << " not in map; creating selectfile" << endl; // debug
       NewQNode = new Selection_FNode(dummy, leftRelName, relNameToTreeMap, pipeIDcounter);
+    }
   }
-  else if(numToJoin == 2){ // equal join operator
+  else if(numToJoin == 2){ // equi-join operator
     rightRelName.assign(RelName[1]);
+    // cout << "join on " << leftRelName << " " << rightRelName << endl; // debug
     NewQNode = new JoinNode(dummy, leftRelName, rightRelName, relNameToTreeMap, pipeIDcounter);
   }
   else
