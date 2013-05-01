@@ -231,10 +231,18 @@ bool Heap :: BinarySearch(Record& fetchme,OrderMaker& leftOrder,Record& literal,
       // runOfRecs.back()->Print(new Schema("catalog","customer"));
       if(compareLiteralAndFront==0){ // 0 indicates that the first element is what we're looking for
         fetchme = *(runOfRecs.front());
-        // the matching record was the last record on the page. the pointer must point to
-        // the start of the NEXT page so successive calls to GetNext WITHOUT CNF can
-        // pick up from there. We've already done this in the readOnePage function (case for return 0),
-        // so nothing else to do.
+        // We need to position the pointer to just after the first (i.e., the matched) record so that 
+        // successive calls to GetNext WITHOUT CNF can pick up from there.
+        if(!done) currPageNo--; // first decrement to undo the increment we made in readOnePage (case for return 0). That increment happens only
+                                // if we're not on the last page, hence the check for done not true
+        currFile->GetPage(currPage,currPageNo); // re-read the page we just read (i.e., the one we found the match in)
+        currPage->GetFirst(&fetchme);
+        while(compEngine.Compare (&literal, &myQueryOrder, &fetchme, &mySortOrder)!=0){ // keep searching till you find Waldo
+                                                                                        // IMPORTANT! queryOrder must be the second (and NOT
+                                                                                        // the fourth argument) because it very well may have
+                                                                                        // fewer attributes than the sortOrder
+          currPage->GetFirst(&fetchme);
+        }
         return true;
       }
       else if(compareLiteralAndBack==0){ // 0 indicates that the last element is what we're looking for
@@ -279,7 +287,7 @@ bool Heap :: BinarySearch(Record& fetchme,OrderMaker& leftOrder,Record& literal,
                                                                           // CNF. So you will be taking O(n) to do that anyway. Which means
                                                                           // your binary search didn't really help you to save on that time.
         if(binary_search(runOfRecs.begin(),runOfRecs.end(),&literal,binarySearchCompare)){ // binary search found the record we were looking for
-          // We need to position the pointer to just after the matched record so that
+          // We need to position the pointer to just after the matched record so that 
           // successive calls to GetNext WITHOUT CNF can pick up from there.
           // The matched record is somewhere in this page. Look for it.
           if(!done) currPageNo--; // first decrement to undo the increment we made in readOnePage (case for return 0). That increment happens only
