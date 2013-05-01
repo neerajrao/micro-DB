@@ -230,51 +230,36 @@ int CNF :: createQueryOrder (OrderMaker &sortOrder, OrderMaker &queryOrder) {
   // is present, we can add it to the query order being built. If it is
   // not present, STOP IMMEDIATELY!
   bool stop = false;
-  for (int j = 0; j < numSortAtts; j++) {
-    if(stop) break;
-    else
-      for (int i = 0; i < numAnds; i++) {
-        // if we don't have a disjunction of length one, then it
-        // can't be acceptable for use with a sort ordering
-        if (orLens[i] != 1) {
-          continue;
-        }
-
-        // made it this far, so first verify that it is an equality check
-        if (orList[i][0].op != Equals) {
-          continue;
-        }
-
-        // Added in assignment 3. So far we assumed that the queries the user
-        // specified would be in the form (abc = XYZ) where XYZ is a literal (and
-        // abc, of course, is an attribute). However, it turns out that the following
-        // query is also possible (abc = abc). Both sides of the comparison are the same
-        // and the intended effect this should have is simply to fetch ALL of the records
-        // from the file.
-        if(orList[i][0].operand1==orList[i][0].operand2){
-          stop = true;
-          break;
-        }
-
-        // cout << "cnf.createqueryorder " << j << " " << orList[i][0].operand1 << " " << orList[i][0].operand2 << " " << orList[i][0].whichAtt1 << " " << orList[i][0].attType << endl;
-        // cout << "cnf.createqueryorder " << j << " " << sortOrder.whichAtts[j] << " " << sortOrder.whichTypes[j] << endl;
-
-        // check that this attribute of the query CNF (the CNF object this method
-        // is being called upon) is also present in the sortOrder
-        if ((orList[i][0].operand1  == Left) &&
-            (orList[i][0].whichAtt1 == sortOrder.whichAtts[j]) &&
-            (orList[i][0].attType   == sortOrder.whichTypes[j])){
-          queryOrder.whichAtts[queryOrder.numAtts] = i;
-          queryOrder.whichTypes[queryOrder.numAtts] = orList[i][0].attType;
-
-          queryOrder.numAtts++;
-        }
-        else{ // if this attribute of the sortOrder was not present in the query CNF,
-              // STOP IMMEDIATELY
-          stop = true;
-          break;
-        }
+  for (int j = 0; j < numSortAtts && stop==false; j++) {
+    for (int i = 0; i < numAnds; i++) {
+      // if we don't have a disjunction of length one, then it
+      // can't be acceptable for use with a sort ordering
+      if (orLens[i] != 1) {
+        continue;
       }
+
+      // made it this far, so first verify that it is an equality check
+      if (orList[i][0].op != Equals) {
+        continue;
+      }
+
+      // check that this attribute of the query CNF (the CNF object this method
+      // is being called upon) is also present in the sortOrder
+      if ((orList[i][0].operand1  == Left) &&
+          (orList[i][0].whichAtt1 == sortOrder.whichAtts[j]) &&
+          (orList[i][0].attType   == sortOrder.whichTypes[j])){
+        queryOrder.whichAtts[queryOrder.numAtts] = i;
+        queryOrder.whichTypes[queryOrder.numAtts] = orList[i][0].attType;
+
+        queryOrder.numAtts++;
+        stop = false;
+        break;
+      }
+      else{ // if this attribute of the sortOrder was not present in the query CNF,
+            // STOP IMMEDIATELY
+        stop = true;
+      }
+    }
   }
 
   return queryOrder.numAtts;
