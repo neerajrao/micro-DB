@@ -555,7 +555,7 @@ class Group_byNode : virtual public GenericQTreeNode {
 
 /*******************************************************************************
  * Tree Node for Join operation
- * TODO: finish this class
+ * There may be more than one of these in the query tree.
  ******************************************************************************/
 class JoinNode : virtual public GenericQTreeNode {
   private:
@@ -565,38 +565,65 @@ class JoinNode : virtual public GenericQTreeNode {
     Join J;
 
   public:
-    JoinNode(struct AndList &dummy, string &RelName0, string &RelName1, unordered_map<string,GenericQTreeNode*> &NameTreeMapping, int pipeIDcounter){
+    JoinNode(struct AndList &dummy, string &RelName0, string &RelName1, unordered_map<string,GenericQTreeNode*> &relNameToTreeMap, int& pipeIDcounter){
       GenericQTreeNode();
       this->RelName0 = RelName0;
       this->RelName1 = RelName1;
       GenericQTreeNode* lSubT=NULL,*rSubT=NULL;
 
-      // if tree structure already exist for att name, retrieve the subtree.
-      if(NameTreeMapping.count(RelName0))
-        lSubT=NameTreeMapping[RelName0];
-      else
-        // create a new selectfilenode with empty CNF for the left
-      if(NameTreeMapping.count(RelName1))
-        rSubT=NameTreeMapping[RelName1];
-      else
-        // create a new selectfilenode with empty CNF for the left
+      // LEFT CHILD
+      if(!relNameToTreeMap.count(RelName0)){
+        // this relation has not been encountered before this Join. Create a SelectFile Node
+        // with an empty CNF (equivalent to a "Select *") to pipe in its input. 
+        GenericQTreeNode* NewQNode;
+        // Create an empty AndList so that the SelectFile node creates an empty CNF
+        AndList tempAndList;
+        tempAndList.left = NULL;
+        tempAndList.rightAnd = NULL;
+        NewQNode = new Selection_FNode(tempAndList, RelName0, relNameToTreeMap, pipeIDcounter);
+        pipeIDcounter++;
+        relNameToTreeMap[RelName0] = NewQNode;
+      }
+      // retrieve the subtree (if we went into the if block above, this subtree consists of only
+      // the one SelectFile node).
+      lSubT=relNameToTreeMap[RelName0];
 
-      // connect the tree structure. update the name-treeNode pointer hash.
+      // RIGHT CHILD
+      if(!relNameToTreeMap.count(RelName1)){
+        // this relation has not been encountered before this Join. Create a SelectFile Node
+        // with an empty CNF (equivalent to a "Select *") to pipe in its input. 
+        GenericQTreeNode* NewQNode;
+        // Create an empty AndList so that the SelectFile node creates an empty CNF
+        AndList tempAndList;
+        tempAndList.left = NULL;
+        tempAndList.rightAnd = NULL;
+        NewQNode = new Selection_FNode(tempAndList, RelName1, relNameToTreeMap, pipeIDcounter);
+        pipeIDcounter++;
+        relNameToTreeMap[RelName1] = NewQNode;
+      }
+      // retrieve the subtree (if we went into the if block above, this subtree consists of only
+      // the one SelectFile node).
+      rSubT=relNameToTreeMap[RelName1];
+
+      // connect this node to its subtrees
       left=lSubT;
       right=rSubT;
-      NameTreeMapping[RelName0]=this;
-      NameTreeMapping[RelName1]=this;
+
+      // this node now takes its place in the hash as the root of the tree associated with the two
+      // relations being joined
+      relNameToTreeMap[RelName0]=this;
+      relNameToTreeMap[RelName1]=this;
 
       // the right attribute will be joined (eliminated). delete the right attribute's subtree if it exists.
-      if(NameTreeMapping.count(RelName1))
-        NameTreeMapping.erase(RelName1);
+      if(relNameToTreeMap.count(RelName1))
+        relNameToTreeMap.erase(RelName1);
 
       rschema=left->schema();
       rschema=rschema->mergeSchema(right->schema());
 
       pipeID=pipeIDcounter;
 
-      // create the CNF form schema.
+      // create the CNF from schema.
       cnf_pred.GrowFromParseTree (&dummy, rschema, literal);
     };
 
