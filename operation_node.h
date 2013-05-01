@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <sstream>
 #include "ParseTree.h"
+#include "Comparison.h"
 #include "a3utils.h"
 
 using namespace std;
@@ -20,7 +21,7 @@ extern unordered_map<string, relation*> DBinfo;
  ******************************************************************************/
 void printNameList(NameList *n){
   do{
-    cout << n->name << endl;
+    cout << "    " << n->name << endl;
     n = n->next;
   }while(n);
 }
@@ -124,8 +125,8 @@ class Selection_PNode : virtual public GenericQTreeNode {
       cout << endl;
       cout << "****************" << endl;
       cout << "Select Pipe Operation" << endl;
-      cout << "Input pipe ID " << left->pipeID << endl;
-      cout << "Output pipe ID " << pipeID << endl;
+      cout << "Input pipe ID: " << left->pipeID << endl;
+      cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(left->schema());
       cout << "CNF: " << endl << "    ";
       cnf_pred.Print();
@@ -186,7 +187,7 @@ class Selection_FNode : virtual public GenericQTreeNode {
       cout << endl;
       cout << "****************" << endl;
       cout << "Select File Operation" << endl;
-      cout << "Output pipe ID " << pipeID << endl;
+      cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rel->schema());
       cout << "CNF: " << endl << "    ";
       cnf_pred.Print();
@@ -286,10 +287,10 @@ class ProjectNode : virtual public GenericQTreeNode {
       cout << endl;
       cout << "****************" << endl;
       cout << "Projection Operation" << endl;
-      cout << "Input pipe ID " << left->pipeID << endl;
-      cout << "Output pipe ID " << pipeID << endl;
+      cout << "Input pipe ID: " << left->pipeID << endl;
+      cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
-      cout << "Attributes to keep: " << endl << "    ";
+      cout << "Project Attributes:" << endl << "    ";
       printNameList(atts);
       cout << "****************" << endl;
     };
@@ -341,8 +342,8 @@ class DupRemNode : virtual public GenericQTreeNode {
       cout << endl;
       cout << "****************" << endl;
       cout << "Duplicate Removal Operation" << endl;
-      cout << "Input pipe ID " << left->pipeID << endl;
-      cout << "Output pipe ID " << pipeID << endl;
+      cout << "Input pipe ID: " << left->pipeID << endl;
+      cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
       cout << "****************" << endl;
     };
@@ -413,8 +414,8 @@ class SumNode : virtual public GenericQTreeNode {
       cout << endl;
       cout << "****************" << endl;
       cout << "Sum Operation" << endl;
-      cout << "Input pipe ID " << left->pipeID << endl;
-      cout << "Output pipe ID " << pipeID << endl;
+      cout << "Input pipe ID: " << left->pipeID << endl;
+      cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
       cout << "Corresponding Function: " << endl;
       Func.Print(); // TODO: Implement Print() in Function.cc
@@ -429,6 +430,110 @@ class SumNode : virtual public GenericQTreeNode {
 
     void WaitUntilDone(){
       S.WaitUntilDone ();
+    }
+
+};
+
+/*******************************************************************************
+ * Tree Node for Group By operation
+ * Only ONE instance of this node will be in the Query Tree at any given time.
+ * Group By, Sum and Project are mutually exlusive!!!
+ ******************************************************************************/
+class Group_byNode : virtual public GenericQTreeNode {
+  private:
+    Function Func;
+    NameList GAtts; // will be used for printing in Print()
+    GroupBy G;
+    myAtt* orderMakerAtts; // used to create the OrderMaker passed to GroupBy in Run
+    OrderMaker grp_order; // used to create the OrderMaker passed to GroupBy in Run
+
+  public:
+    Group_byNode(NameList *gAtts, FuncOperator *funcOperator, GenericQTreeNode* &root, int& pipeIDcounter){
+      GenericQTreeNode();
+      left = root;
+      root = this;
+
+      GAtts = *gAtts; // will be used for printing in Print()
+      NameList tempNameList = *gAtts; // create a temporary copy of gAtts because it will be destroyed
+                                      // when we walk it to determine numGroupingAtts below
+
+      // inherit the schema from its left child
+      rschema = left->schema();
+
+      // initialize the Func object that will be passed to the GroupBy object in Run()
+      Func.GrowFromParseTree (funcOperator, *rschema); // constructs CNF predicate
+
+      // We must craft an output schema that will have
+      // 1. first attribute -- either an Int or a Double (we use a dummy Function
+      //    object below to find out which)-- for the attribute that we are summing on .
+      // 2. remaining attributes -- all the grouping attributes
+      int numGroupingAtts = 0;
+      do{
+        numGroupingAtts++;
+        gAtts = gAtts->next;
+      }while(gAtts);
+
+      orderMakerAtts = new myAtt[numGroupingAtts](); // used to create the OrderMaker
+                                                     // passed to GroupBy in Run()
+
+      numGroupingAtts++; // add 1 attribute for the sum attribute
+      Attribute* outAtts = new Attribute[numGroupingAtts]; // used to create GroupBy's output schema
+                                                           // that will be used to print in clear_pipe
+
+      // add the first attribute (either an Int or a Double depending on the summing function)
+      Function tempFunc;
+      Type outputType = tempFunc.RecursivelyBuild(funcOperator,*(left->schema()));
+      if(outputType==Int)
+        outAtts[0] = {"Sum", Int};
+      else if(outputType==Double)
+        outAtts[0] = {"Sum", Double};
+
+      // add the remaining attributes (the grouping attributes)
+      int i=0;
+      NameList* temp = &tempNameList;
+      do{
+        orderMakerAtts[i].attNo =  rschema->Find(temp->name);
+        orderMakerAtts[i].attType = rschema->FindType(temp->name);
+        i++;
+        outAtts[i] = {temp->name,rschema->FindType(temp->name)};
+        temp = temp->next;
+      }while(temp);
+
+      rschema = new Schema("out_sch", numGroupingAtts, outAtts);
+
+      grp_order.initOrderMaker(numGroupingAtts-1,orderMakerAtts);
+
+      pipeID = pipeIDcounter;
+      pipeIDcounter++; // increment for next guy
+    };
+
+    Schema* schema () {
+      return rschema;
+    }
+
+    ~Group_byNode(){
+    };
+
+    void Print(){
+      cout << endl;
+      cout << "****************" << endl;
+      cout << "GroupBy Operation" << endl;
+      cout << "Input pipe ID: " << left->pipeID << endl;
+      cout << "Output pipe ID: " << pipeID << endl;
+      PrintOutputSchema(rschema);
+      cout << "Grouping Attributes:" << endl;
+      printNameList(&GAtts);
+      cout << "****************" << endl;
+    };
+
+    void Run(){
+      G.Use_n_Pages (buffsz);
+      G.Run (*(left->outpipe), *outpipe, grp_order, Func); // GroupBy takes its input from its left child's
+                                                           // outPipe. Its right child is NULL.
+    };
+
+    void WaitUntilDone(){
+      G.WaitUntilDone ();
     }
 
 };
@@ -501,49 +606,13 @@ class JoinNode : virtual public GenericQTreeNode {
       cout << "****************" << endl;
       cout << "Join Operation" << endl;
       if(left)
-      cout << "Input pipe ID " << left->pipeID << endl;
+      cout << "Input pipe ID: " << left->pipeID << endl;
       if(right)
-      cout << "Input pipe ID " << right->pipeID << endl;
-      cout << "Output pipe ID " << pipeID << endl;
+      cout << "Input pipe ID: " << right->pipeID << endl;
+      cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
       cout << "CNF: " << endl << "    ";
       cnf_pred.Print();
-      cout << "****************" << endl;
-    };
-};
-
-/*******************************************************************************
- * Tree Node for Group By operation
- * Only ONE instance of this node will be in the Query Tree at any given time.
- * Group By, Sum and Project are mutually exlusive!!!
- ******************************************************************************/
-class Group_byNode : virtual public GenericQTreeNode {
-  private:
-    NameList *Gatts;
-  public:
-    Group_byNode(NameList *n, FuncOperator *funcOperator, GenericQTreeNode* &root, int& pipeIDcounter){
-      GenericQTreeNode();
-      left = root;
-      root = this;
-      Gatts = n;
-      pipeID = pipeIDcounter;
-      pipeIDcounter++; // increment for next guy
-    };
-
-    Schema* schema () {
-      return rschema;
-    }
-
-    ~Group_byNode(){
-    };
-
-    void Print(){
-      cout << endl;
-      cout << "****************" << endl;
-      cout << "GroupBy Operation" << endl;
-      cout << "output relation: " << endl;
-      cout << "groupBy attributes to keep: " << endl;
-      printNameList(Gatts);
       cout << "****************" << endl;
     };
 };
