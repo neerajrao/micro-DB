@@ -123,14 +123,14 @@ class Selection_PNode : virtual public GenericQTreeNode {
 
     void Print(){
       cout << endl;
-      cout << "****************" << endl;
+      cout << "***************************" << endl;
       cout << "Select Pipe Operation" << endl;
       cout << "Input pipe ID: " << left->pipeID << endl;
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(left->schema());
-      cout << "CNF: " << endl << "    ";
+      cout << "Select CNF: " << endl << "    ";
       cnf_pred.Print();
-      cout << "****************" << endl;
+      cout << "***************************" << endl;
     };
 
     void Run(){
@@ -187,13 +187,13 @@ class Selection_FNode : virtual public GenericQTreeNode {
 
     void Print(){
       cout << endl;
-      cout << "****************" << endl;
+      cout << "***************************" << endl;
       cout << "Select File Operation" << endl;
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rel->schema());
       cout << "CNF: " << endl << "    ";
       cnf_pred.Print();
-      cout << "****************" << endl;
+      cout << "***************************" << endl;
     };
 
     void Run(){
@@ -292,14 +292,14 @@ class ProjectNode : virtual public GenericQTreeNode {
 
     void Print(){
       cout << endl;
-      cout << "****************" << endl;
+      cout << "***************************" << endl;
       cout << "Projection Operation" << endl;
       cout << "Input pipe ID: " << left->pipeID << endl;
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
-      cout << "Project Attributes:" << endl << "    ";
+      cout << "Project Attributes:" << endl;
       printNameList(&PAtts);
-      cout << "****************" << endl;
+      cout << "***************************" << endl;
     };
 
     void Run(){
@@ -349,12 +349,12 @@ class DupRemNode : virtual public GenericQTreeNode {
 
     void Print(){
       cout << endl;
-      cout << "****************" << endl;
+      cout << "***************************" << endl;
       cout << "Duplicate Removal Operation" << endl;
       cout << "Input pipe ID: " << left->pipeID << endl;
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
-      cout << "****************" << endl;
+      cout << "***************************" << endl;
     };
 
     void Run(){
@@ -423,14 +423,14 @@ class SumNode : virtual public GenericQTreeNode {
 
     void Print(){
       cout << endl;
-      cout << "****************" << endl;
+      cout << "***************************" << endl;
       cout << "Sum Operation" << endl;
       cout << "Input pipe ID: " << left->pipeID << endl;
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
       cout << "Corresponding Function: " << endl;
       Func.Print(); // TODO: Implement Print() in Function.cc
-      cout << "****************" << endl;
+      cout << "***************************" << endl;
     };
 
     void Run(){
@@ -529,14 +529,14 @@ class Group_byNode : virtual public GenericQTreeNode {
 
     void Print(){
       cout << endl;
-      cout << "****************" << endl;
+      cout << "***************************" << endl;
       cout << "GroupBy Operation" << endl;
       cout << "Input pipe ID: " << left->pipeID << endl;
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
       cout << "Grouping Attributes:" << endl;
       printNameList(&GAtts);
-      cout << "****************" << endl;
+      cout << "***************************" << endl;
     };
 
     void Run(){
@@ -624,15 +624,18 @@ class JoinNode : virtual public GenericQTreeNode {
       pipeID=pipeIDcounter;
 
       // create the CNF from schema.
-      cnf_pred.GrowFromParseTree (&dummy, rschema, literal);
+      cnf_pred.GrowFromParseTree (&dummy, left->schema(), right->schema(), literal);
     };
 
     void Run(){
+      // cout << "join started" << endl; //debug
       J.Use_n_Pages (buffsz);
-      J.Run(*(left->outpipe),*(right->outpipe),*outpipe,cnf_pred,literal);
+      J.Run(*(left->outpipe),*(right->outpipe),*outpipe,cnf_pred,literal); // Join takes its input from its left and
+                                                                           // right children's outpipes
     };
 
     void WaitUntilDone(){
+      // cout << "join ended" << endl; //debug
       J.WaitUntilDone ();
     }
 
@@ -645,17 +648,15 @@ class JoinNode : virtual public GenericQTreeNode {
 
     void Print(){
       cout << endl;
-      cout << "****************" << endl;
+      cout << "***************************" << endl;
       cout << "Join Operation" << endl;
-      if(left)
-      cout << "Input pipe ID: " << left->pipeID << endl;
-      if(right)
-      cout << "Input pipe ID: " << right->pipeID << endl;
+      cout << "Input pipe 1 ID: " << left->pipeID << endl;
+      cout << "Input pipe 2 ID: " << right->pipeID << endl;
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
-      cout << "CNF: " << endl << "    ";
+      cout << "Join CNF: " << endl << "    ";
       cnf_pred.Print();
-      cout << "****************" << endl;
+      cout << "***************************" << endl;
     };
 };
 

@@ -148,7 +148,7 @@ int main () {
      case 5:
        Qrenaming();
        queryPlanning();
-       //queryExecution();
+       queryExecution();
        break;
      case 6:
        cout << endl << "Exiting database"<<endl;

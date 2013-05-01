@@ -189,7 +189,7 @@ void ConvertOrList(struct OrList *pOr) {
  * Tree nodes can be Join or Select so we only work with Join and Select
  * ANDList nodes
  *----------------------------------------------------------------------------*/
-void AndListNode2QTreeNode(struct AndList &dummy, char* RelName[], int numToJoin, int pipeIDcounter){
+void AndListNode2QTreeNode(struct AndList &dummy, char* RelName[], int numToJoin, int& pipeIDcounter){
   // cout << RelName[0] << " " << RelName[1] << " " << numToJoin << endl; // debug
   string leftRelName(RelName[0]), rightRelName;
   GenericQTreeNode* NewQNode;
@@ -470,17 +470,17 @@ void queryPlanning(){
                             // needed because we accept SQL commands in a while loop
                             // in main.cc
   Statistics s;
-  cout << endl << "---------------------------" << endl;
-  cout <<         "Starting query optimization";
-  cout << endl << "---------------------------" << endl;
+  cout << endl << "--------------------------------------------" << endl;
+  cout <<         "         Starting query optimization";
+  cout << endl << "--------------------------------------------" << endl;
   s.Read(fileName); // init Statistics object from serialized text file
   PermutationTreeGen(whereClausePredicate, tables, s);
 
   cout << endl << "Generated Query Plan: " << endl; // InOrder print out the tree.
   InOrderPrintQTree(QueryRoot);
-  cout << endl << "-----------------------" << endl;
-  cout <<         "Query optimization done";
-  cout << endl << "-----------------------" << endl;
+  cout << endl << "--------------------------------------------" << endl;
+  cout <<         "           Query optimization done";
+  cout << endl << "--------------------------------------------" << endl;
 }
 
 /*------------------------------------------------------------------------------
@@ -488,9 +488,9 @@ void queryPlanning(){
  * Called in main.cc
  *----------------------------------------------------------------------------*/
 void queryExecution(){
-  cout << endl << "------------------------" << endl;
-  cout <<         "Starting query execution";
-  cout << endl << "------------------------" << endl;
+  cout << endl << "--------------------------------------------" << endl;
+  cout <<         "          Starting query execution";
+  cout << endl << "--------------------------------------------" << endl;
 
   // Run() ALL the nodes before you call WaitUntilDone() on ANY of them
   PostOrderRun(QueryRoot);
@@ -503,9 +503,9 @@ void queryExecution(){
   PostOrderWait(QueryRoot);
 
   cout << "\nQuery returned " << cnt << " records \n";
-  cout << endl << "--------------------" << endl;
-  cout <<         "Query execution done";
-  cout << endl << "--------------------" << endl;
+  cout << endl << "--------------------------------------------" << endl;
+  cout <<         "           Query execution done";
+  cout << endl << "--------------------------------------------" << endl;
 }
 
 #endif  /* UTILS_H */
