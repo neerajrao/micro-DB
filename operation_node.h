@@ -17,16 +17,6 @@ using namespace std;
 extern unordered_map<string, relation*> DBinfo;
 
 /*******************************************************************************
- * Helper function that prints out NameList
- ******************************************************************************/
-void printNameList(NameList *n){
-  do{
-    cout << "    " << n->name << endl;
-    n = n->next;
-  }while(n);
-}
-
-/*******************************************************************************
  * Helper function to print output schema of each node
  ******************************************************************************/
 void PrintOutputSchema(Schema* s){
@@ -301,7 +291,7 @@ class ProjectNode : virtual public GenericQTreeNode {
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
       cout << "Project Attributes:" << endl;
-      printNameList(&PAtts);
+      PrintNameList(&PAtts);
       cout << "***************************" << endl;
     };
 
@@ -541,7 +531,7 @@ class Group_byNode : virtual public GenericQTreeNode {
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
       cout << "Grouping Attributes:" << endl;
-      printNameList(&GAtts);
+      PrintNameList(&GAtts);
       cout << "***************************" << endl;
     };
 

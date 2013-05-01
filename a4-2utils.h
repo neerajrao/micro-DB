@@ -19,32 +19,9 @@
 #include <cstring>
 #include <algorithm>
 #include "operation_node.h"
+#include "a3utils.h"
 
 using namespace std;
-
-// extern variable and function from yyac.
-extern "C" {
-  int yyparse(void); // defined in y.tab.c
-}
-
-extern "C"  struct FuncOperator *finalFunction; // the aggregate function (NULL if no agg)
-extern "C"  struct TableList *tables; // the list of tables and aliases in the query
-extern "C"  struct AndList *whereClausePredicate; // the predicate in the WHERE clause
-extern "C"  struct NameList *groupingAtts; // grouping atts (NULL if no grouping)
-extern "C"  struct NameList *attsToSelect; // the set of attributes in the SELECT (NULL if no such atts)
-extern "C"  int distinctAtts; // 1 if there is a DISTINCT in a non-aggregate query
-extern "C"  int distinctFunc;  // 1 if there is a DISTINCT in an aggregate query
-
-// variable defined by Guang
-extern "C"  struct SchemaList *schemas; // the list of tables and aliases in the query
-extern "C"  struct NameList *bulkFileName; // bulk loading file name string
-extern "C"  struct NameList *outputFileName; // output file name or STDOUT string
-extern "C"  int commandFlag; // 1 if the command is a create table command.
-                             // 2 if the command is a Insert into command
-                             // 3 if the command is a drop table command
-                             // 4 if the command is a set output command
-                             // 5 if the command is a SQL command
-extern "C"  int NumAtt;
 
 GenericQTreeNode* QueryRoot; // after executing queryPlanning, the root should be saved here!!
 // Serialized form of the Statistics object
@@ -60,93 +37,6 @@ unordered_map<string, string> relAlias;
  * Final Qtree will be the only name Node pair left in this hash.
  *----------------------------------------------------------------------------*/
 unordered_map<string, GenericQTreeNode*> relNameToTreeMap;
-
-/*------------------------------------------------------------------------------
- * Helper functions to print things.
- *----------------------------------------------------------------------------*/
-void PrintOperand(struct Operand *pOperand){
-  if(pOperand!=NULL)
-    cout << pOperand->value << " ";
-  else
-    return;
-}
-
-void PrintComparisonOp(struct ComparisonOp *pCom)
-{
-  if(pCom!=NULL){
-    PrintOperand(pCom->left);
-    switch(pCom->code){
-      case 5:
-        cout << " < ";
-        break;
-      case 6:
-        cout << " > ";
-        break;
-      case 7:
-        cout << " = ";
-
-    }
-    PrintOperand(pCom->right);
-  }
-  else {
-    return;
-  }
-}
-
-void PrintOrList(struct OrList *pOr) {
-  if(pOr !=NULL) {
-    struct ComparisonOp *pCom = pOr->left;
-    PrintComparisonOp(pCom);
-    if(pOr->rightOr) {
-      cout << " OR ";
-      PrintOrList(pOr->rightOr);
-    }
-  }
-  else
-    return;
-}
-
-void PrintAndList(struct AndList *pAnd) {
-  if(pAnd !=NULL) {
-    struct OrList *pOr = pAnd->left;
-    PrintOrList(pOr);
-    if(pAnd->rightAnd) {
-      cout << " AND ";
-      PrintAndList(pAnd->rightAnd);
-    }
-    cout << endl;
-  }
-  else
-    return;
-}
-
-void printTableList(TableList *t){
-  do{
-    if(t->aliasAs)
-      cout << t->tableName << " as " << t->aliasAs << " ";
-    else
-      cout << t->tableName << " ";
-    t = t->next;
-  }while(t);
-  cout << endl;
-}
-
-void printEverything(){
-  cout << endl;
-  cout << "where clause: ";
-  PrintAndList(whereClausePredicate);
-  cout << "from clause table list: ";
-  printTableList(tables);
-  cout << "groupby list: ";
-  printNameList(groupingAtts);
-  cout << "select list: ";
-  printNameList(attsToSelect);
-
-  cout << "distinctFunc: " << distinctFunc << endl;
-  cout << "distinctAtts: " << distinctAtts << endl;
-
-  cout << "func " << finalFunction->code << " " << endl;
-}
 
 /*------------------------------------------------------------------------------
  * Used to remove dots from the dummy ANDList

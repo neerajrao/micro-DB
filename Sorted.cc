@@ -19,7 +19,7 @@ typedef struct{
 
 void* myWorkerRoutine(void* ptr){
   myWorkerUtil* myT = (myWorkerUtil*) ptr;
-  cout << " sorted.myworkerroutine " << myT->runlen << endl;
+  // cout << " sorted.myworkerroutine " << myT->runlen << endl; // debug
   new BigQ(*(myT->inputPipe),*(myT->outputPipe),*(myT->sortOrder),myT->runlen); // the BigQ constructor spawns a thread and waits on
                                                            //  1. The input pipe to shut down
                                                            //  2. The TPMMS to start and finish.

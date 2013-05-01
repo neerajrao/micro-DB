@@ -70,6 +70,8 @@ void yyerror(char*s);
 
 "quit"    return(QUIT);
 
+"ON"			return(ON);
+
 "("			return('(');
 
 "<"                     return('<');

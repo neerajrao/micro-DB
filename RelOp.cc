@@ -60,11 +60,14 @@ void* selectPipeRoutine(void* ptr){
   SelectPipeUtil* myT = (SelectPipeUtil*) ptr;
   Record currRec;
   ComparisonEngine ceng;
+  // cout << "here" << endl;
   while(myT->inputPipe->Remove(&currRec)!=0){ // keep reading from the input pipe as long it has elements in it
+    // cout << "here" << endl;
     if(ceng.Compare(&currRec,myT->literal,myT->cnf)==1){ // push to output pipe if we have equality
       myT->outputPipe->Insert(&currRec);
     }
   }
+  // cout << "select pipe calling shutdown" << endl;
   myT->outputPipe->ShutDown();
   return 0;
 }
@@ -101,6 +104,7 @@ void* selectFileRoutine(void* ptr){
   while(myT->dbfile->GetNext(currRec,*(myT->cnf),*(myT->literal))){ // keep reading from the input file as long it has elements in it
     myT->outputPipe->Insert(&currRec);
   }
+  cout << "select file calling shutdown" << endl;
   myT->outputPipe->ShutDown();
   return 0;
 }
@@ -411,6 +415,7 @@ void* joinRoutine(void* ptr){
       }
       if(readRight && !rightDone && !dupsEnded){ // dupsEnded added because if we found a duplicate in the last iteration, we've read one record too many
         rightDone = outputPipeR->Remove(&recR)==0;
+        // recR.Print(new Schema("catalog","region")); // debug
       }
 
       if(!mergeVarsInited){ // one-time block to init merge variables
@@ -484,7 +489,11 @@ void* joinRoutine(void* ptr){
           else{ // no more duplicates
             dupsEnded = true;
           }
-          if(!dupsEnded) rightDone = outputPipeR->Remove(&recR)==0;
+          if(!dupsEnded){
+            rightDone = outputPipeR->Remove(&recR)==0;
+            cout << rightDone << " "; // debug
+            recR.Print(new Schema("catalog","region")); // debug
+          }
         } while(!dupsEnded && !rightDone);
 
         // now try the left table. If the tuple(s) you read in has the same column value as the last record you read from
