@@ -42,7 +42,8 @@ void createDB(){
   rel = new relation (relName, sch, dbfile_dir);
   char db_path[100]; // construct path of the saved state file
   sprintf (db_path, "%s%s", dbfile_dir, savedStateFile);
-  ofstream myfile (db_path);
+  ofstream myfile;
+  myfile.open (db_path, ofstream::out | ofstream::app);
 
   if(strcmp(createTableType->heapOrSorted,"HEAP")==0){
     cout << "HEAP DBFile will be placed at " << rel->path () << "..." << endl;
