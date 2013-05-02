@@ -377,7 +377,31 @@ AndList: '(' OrList ')' AND AndList
         $$->left = $2;
         $$->rightAnd = NULL;
 }
-;
+
+
+| '(' OrList AND  AndList
+{
+        // just return the OrList!
+        $$ = (struct AndList *) malloc (sizeof (struct AndList));
+        $$->left = $2;
+        $$->rightAnd = $4;
+}
+
+|  OrList ')' AND  AndList
+{
+        // just return the OrList!
+        $$ = (struct AndList *) malloc (sizeof (struct AndList));
+        $$->left = $1;
+        $$->rightAnd = $4;
+}
+
+|  OrList ')' 
+{
+        // just return the OrList!
+        $$ = (struct AndList *) malloc (sizeof (struct AndList));
+        $$->left = $1;
+        $$->rightAnd = NULL;
+};
 
 OrList: Condition OR OrList
 {
