@@ -83,6 +83,49 @@ void createDB(){
 }
 
 /*------------------------------------------------------------------------------
+ * Meant only for Project Demo. Normally, this code should be called via createDB
+ *----------------------------------------------------------------------------*/
+void demoSetup(){
+  cout << "--------------------------------------------" << endl;
+  cout << "Creating all relation schemas" << endl;
+  char db_path[100]; // construct path of the saved state file
+  sprintf (db_path, "%s%s", dbfile_dir, savedStateFile);
+  ofstream myfile;
+  myfile.open (db_path, ofstream::out);
+  if (myfile.is_open()){
+    myfile << supplier << endl;
+    myfile << part << endl;
+    myfile << partsupp << endl;
+    myfile << nation << endl;
+    myfile << lineitem << endl;
+    myfile << region << endl;
+    myfile << orders << endl;
+    myfile << customer << endl;
+  }
+  myfile.close();
+  RestoreDBState();
+
+  cout << "--------------------------------------------" << endl;
+  cout << "Inserting data..." << endl << endl;
+  ifstream infile;
+  infile.open(db_path);
+  string buffer;
+  char tbl_path[100]; // construct path of the tpch bulk data file
+  while (getline(infile, buffer)){ // while the file has more lines.
+    sprintf (tbl_path, "%s%s.tbl", tpch_dir, (char*)buffer.c_str());
+    cout << "Inserting data from " << tbl_path << "..." << endl;
+    DBFile dbfile;
+    dbfile.Create (DBinfo[buffer]->path(), heap, NULL);
+    dbfile.Close();
+    dbfile.Open (DBinfo[buffer]->path());
+    dbfile.Load (*(DBinfo[buffer]->schema ()), tbl_path);
+    dbfile.Close();
+  }
+  cout << "--------------------------------------------" << endl << endl;
+  infile.close();
+}
+
+/*------------------------------------------------------------------------------
  * Insert data into relation. Called if user specifies INSERT on command input
  *----------------------------------------------------------------------------*/
 void insertDB(){
@@ -103,6 +146,7 @@ void insertDB(){
     dbfile.Close();
 
     // Check whether data loaded correctly
+    cout << endl << "Reading back data to check" << endl;
     Record temp;
     dbfile.Open (rel->path());
     dbfile.MoveFirst();
@@ -196,6 +240,7 @@ int main () {
      * 4 if the command is a set output command
      * 5 if the command is a SQL command
      * 6 if the command is 'quit'
+     * 7 if the command is 'demosetup'
      *******************************************/
    switch (commandFlag){
      case 1:
@@ -220,6 +265,10 @@ int main () {
      case 6:
        cout << endl << "Exiting database" << endl;
        exit(0);
+       break;
+     case 7:
+       demoSetup();
+       break;
      case -1:
        cout << "ERROR: Please check your command syntax." << endl;
        break;

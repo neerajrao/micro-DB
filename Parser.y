@@ -31,6 +31,7 @@
                    // 4 if the command is a set output command
                    // 5 if the command is a SQL command
                    // 6 if the command is 'quit'
+                   // 7 if the command is 'demosetup'
   int NumAtt=0;
 %}
 
@@ -72,6 +73,7 @@
 %token AND
 %token OR
 %token QUIT
+%token DEMOSETUP
 %token ON
 
 %type <myOrList> OrList
@@ -100,11 +102,17 @@ COMMANDLINE: SQL
 | DR_TABLE
 | SET_OUTPUT
 | CR_TABLE
-| QUIT_PROGRAM;
+| QUIT_PROGRAM
+| DEMO_SETUP;
 
 QUIT_PROGRAM: QUIT
 {
   commandFlag=6;
+};
+
+DEMO_SETUP: DEMOSETUP
+{
+  commandFlag=7;
 };
 
 CR_TABLE: CREATE TABLE Tables '(' Schema ')' AS TableType

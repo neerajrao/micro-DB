@@ -236,7 +236,7 @@ void RestoreDBState(){
   infile.open(db_path);
   string buffer;
   cout << endl << "--------------------------------------------" << endl;
-  cout << "INFO: The following relation(s) are currently loaded:" << endl;
+  cout << "INFO: The following relation schemas have been loaded:" << endl;
   while (getline(infile, buffer)){ // while the file has more lines.
     DBinfo[buffer]=new relation ((char*)buffer.c_str(), new Schema (catalog_path, (char*)buffer.c_str()), dbfile_dir);
     cout << buffer << endl;

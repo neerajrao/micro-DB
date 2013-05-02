@@ -9,6 +9,7 @@
 #include <string.h>
 #include <vector>
 #include <cmath>
+#include <sstream>
 
 using namespace std;
 
@@ -104,7 +105,7 @@ void* selectFileRoutine(void* ptr){
   while(myT->dbfile->GetNext(currRec,*(myT->cnf),*(myT->literal))){ // keep reading from the input file as long it has elements in it
     myT->outputPipe->Insert(&currRec);
   }
-  cout << "select file calling shutdown" << endl; // debug
+  // cout << "select file calling shutdown" << endl; // debug
   myT->outputPipe->ShutDown();
   return 0;
 }
@@ -404,18 +405,35 @@ void* joinRoutine(void* ptr){
     bool leftDone = false; // true = left BigQ emptied
     bool rightDone = false; // true = right BigQ emptied
     bool mergeVarsInited = false; // true = merge variables inited
-    vector<Record*>* dupRecsVector = new vector<Record*>();
+    vector<Record*>* dupRecsVectorR = new vector<Record*>();
+    vector<Record*>* dupRecsVectorL = new vector<Record*>();
 
     // keep reading from the BigQs as long as they have elements in it
     bool dupsEnded = false;
     do{
       // read in the first record from the appropriate bigQ
-      if(readLeft && !leftDone && !dupsEnded){ // dupsEnded added because if we found a duplicate in the last iteration, we've read one record too many
-        leftDone = outputPipeL->Remove(&recL)==0;
-      }
-      if(readRight && !rightDone && !dupsEnded){ // dupsEnded added because if we found a duplicate in the last iteration, we've read one record too many
-        rightDone = outputPipeR->Remove(&recR)==0;
-        // recR.Print(new Schema("catalog","region")); // debug
+      // unless we exhausted the BigQ in the previous iteration
+      // (we set readLeft/Right to false if left/rightDone are
+      // true near the end of this do-while before performing
+      // the cross-product)
+      if(!dupsEnded){ // dupsEnded would be true if we ended in this iteration after having
+                      // gone through a duplicate-finding run, which would result from left
+                      // being equal to right on the columns of interest. in such a case, we
+                      // shouldn't read here but must jump straight to the records comparison.
+                      // this read is for when we come into this iteration because left was
+                      // smaller than right or vice versa in the previous iteration.
+        if(readLeft){
+          leftDone = outputPipeL->Remove(&recL)==0;
+          // recL.Print(new Schema("catalog","nation")); // debug
+        }
+        if(readRight){
+          rightDone = outputPipeR->Remove(&recR)==0;
+          //recR.Print(new Schema("catalog","region")); // debug
+        }
+        // cout << "leftDone " << leftDone << " rightDone " << rightDone << endl; // debug
+        if(leftDone || rightDone) // useful for final demo where Join is a part of a query tree
+                                  // and the incoming relation may not have anything to give us
+          break;
       }
 
       if(!mergeVarsInited){ // one-time block to init merge variables
@@ -434,11 +452,11 @@ void* joinRoutine(void* ptr){
         /*
          * This code is intended to combine input attribute sets that don't have the join columns
          * duplicated. This is what we believe correct Join behavior should be. However, since the
-         * test code doesn't give a crap whether join columns appear more than once, we've commented
-         * this out.
-         * */
-        /*
-        // exclude those attributes on the right that were already used for the join
+           * test code doesn't give a crap whether join columns appear more than once, we've commented
+           * this out.
+           * */
+          /*
+          // exclude those attributes on the right that were already used for the join
         // and hence already in the left attributes we just copied over above
         int j = 0;
         int correctIndex = 0;
@@ -459,71 +477,174 @@ void* joinRoutine(void* ptr){
         mergeVarsInited = true;
       }
 
+      //recL.Print(new Schema("catalog","nation")); // debug
+      //recR.Print(new Schema("catalog","region")); // debug
+
       if(ceng.Compare(&recL,&leftOrderMaker,&recR,&rightOrderMaker)<0){ // left record < right record
                                                                         // left BigQ must advance. right can stay put
-        readLeft = true;
-        readRight = false;
+        if(!leftDone){
+          readLeft = true;
+          readRight = false;
+          dupsEnded = false;
+          // cout << "left must advance" << endl; // debug
+        }
+        else{ // if we've already exhausted the left relation, we can't read any more from it
+          break; // make rightDone also true so we break out of this do-while loop. No point staying in it because
+                            // right is already bigger than the left
+        }
       }
       else if(ceng.Compare(&recL,&leftOrderMaker,&recR,&rightOrderMaker)>0){ // right record < left record
                                                                              // right BigQ must advance. left can stay put
-        readLeft = false;
-        readRight = true;
+        if(!rightDone){
+          readLeft = false;
+          readRight = true;
+          dupsEnded = false;
+          // cout << "right must advance" << endl; // debug
+        }
+        else{ // if we've already exhausted the right relation, we can't read any more from it
+          break; // make leftDone also true so we break out of this do-while loop. No point staying in it because
+                           // left is already bigger than the right
+        }
       }
       else{ // we have a match! Construct a new record that has attributes of both the input
-            // records (taking care not to duplicate the common attributes) and push it to
-            // Join.outPipe
-        Record* oldRecR = new Record;
-        oldRecR->Copy(&recR);
+            // records and push it to Join.outPipe
+        if(!leftDone){
+          // LEFT TABLE
+          Record* oldRecL = new Record;
+          oldRecL->Copy(&recL);
 
-        // read in the next record(s) from the right table and if they have the same column value as the last record read
-        // from the same table, shove them into dupRecsVector
-        Record* tempRec; // used to copy the right relation tuple before pushing on to the vector
-        dupsEnded = false;
-        do{
-          if(ceng.Compare(oldRecR,&rightOrderMaker,&recR,&rightOrderMaker)==0){ // use the same OrderMaker because these are tuples from the same table
+          // Collect sequential duplicates
+          // read in the next record(s) from the left table and if they have the same column value as the last record read
+          // from the same table, shove them into dupRecsVectorL
+          Record* tempRec; // used to copy the right relation tuple before pushing on to the vector
+          dupsEnded = false;
+          do{
+            if(ceng.Compare(oldRecL,&leftOrderMaker,&recL,&leftOrderMaker)==0){ // use the same OrderMaker because these are tuples from the same table
                                                                                 // the first comparison will always be true coz it's the same tuple
-            tempRec = new Record(); // these will be destroyed below by calling delete on each individual vector element.
-            tempRec->Copy(&recR);
-            dupRecsVector->push_back(tempRec); // save this record
-          }
-          else{ // no more duplicates
-            dupsEnded = true;
-          }
-          if(!dupsEnded){
-            rightDone = outputPipeR->Remove(&recR)==0;
-            cout << rightDone << " "; // debug
-            recR.Print(new Schema("catalog","region")); // debug
-          }
-        } while(!dupsEnded && !rightDone);
+                                                                                // thus, dupRecsVectorL will always have at least one element.
+              tempRec = new Record(); // these will be destroyed below by calling delete on each individual vector element.
+              tempRec->Copy(&recL);
+              // cout << endl << "------------------" << endl; // debug
+              // recL.Print(new Schema("catalog","nation")); // debug
+              // oldRecL->Print(new Schema("catalog","nation")); // debug
+              // cout << endl << "------------------" << endl; // debug
+              oldRecL->Copy(&recL);
+              if(!leftDone) // we've already pushed this last record the last time
+                dupRecsVectorL->push_back(tempRec); // save this record
+            }
+            else{ // no more duplicates; first time we will never go in here
+              dupsEnded = true;
+            }
 
-        // now try the left table. If the tuple(s) you read in has the same column value as the last record you read from
-        // this same table, you need to join it with all the tuples from the other table that we just put in dupRecsVector
-        Record* oldRecL = new Record;
-        oldRecL->Copy(&recL);
-        dupsEnded = false;
-        do{
-          if(ceng.Compare(oldRecL,&leftOrderMaker,&recL,&leftOrderMaker)==0){ // use the same OrderMaker because these are tuples from the same table
-                                                                              // the first comparison will always be true coz it's the same tuple
-            for(int i=0;i<dupRecsVector->size();i++){ // we don't even need a comparison here. Just merge them and push 'em out.
-                                                      // do this first for the record we just read
-              Record newRec;
-              newRec.MergeRecords (&recL, dupRecsVector->at(i), numAttsLeft, numAttsRight, attsToKeep, totalAtts, numAttsLeft);
-              myT->outputPipe->Insert(&newRec);
+            if(leftDone){ // set in the previous iteration of this loop
+                          // we go one more instead of stopping in the previous iteration because the last
+                          // record must also be put in the duplicate vector if it's a duplicate
+              readLeft = false; // set to false so that we don't read any more from this relation in the next iteration
+                                // of the outer loop
+              break;
             }
-          }
-          else{ // no more duplicates in left table; okay to delete our vector
-                // don't forget to re-create it
-            dupsEnded = true;
-            for(int i=0;i<dupRecsVector->size();i++){
-              delete dupRecsVector->at(i);
+            else if(!dupsEnded){
+              leftDone = outputPipeL->Remove(&recL)==0;
+              //recL.Print(new Schema("catalog","nation")); // debug
             }
-            dupRecsVector = new vector<Record*>();
+          } while(!dupsEnded);
+          // if, at this point, leftDone is false, it means there are more records to be read and
+          // the last record that we read was not a duplicate of its predecessors.
+          // if, at this point, leftDone is true, it means there are no more records to be read, however
+          // the last record that we read was not a duplicate of its predecessors.
+          // in either event, this last record that was read into recL must not be lost. We will use it in the
+          // next iteration of the outer do-while loop
+          delete oldRecL;
+        }
+        else{ // leftDone is true
+          dupRecsVectorL->push_back(&recL); // this is the lone last record left over from the last iteration
+        }
+
+        if(!rightDone){
+          // RIGHT TABLE
+          Record* oldRecR = new Record;
+          oldRecR->Copy(&recR);
+
+          // Collect sequential duplicates
+          // read in the next record(s) from the right table and if they have the same column value as the last record read
+          // from the same table, shove them into dupRecsVectorR
+          Record* tempRec; // used to copy the right relation tuple before pushing on to the vector
+          dupsEnded = false;
+          do{
+            if(ceng.Compare(oldRecR,&rightOrderMaker,&recR,&rightOrderMaker)==0){ // use the same OrderMaker because these are tuples from the same table
+                                                                                  // the first comparison will always be true coz it's the same tuple
+                                                                                  // thus, dupRecsVectorR will always have at least one element.
+              tempRec = new Record(); // these will be destroyed below by calling delete on each individual vector element.
+              tempRec->Copy(&recR);
+              // cout << endl << "------------------" << endl; // debug
+              // recR.Print(new Schema("catalog","region")); // debug
+              // oldRecR->Print(new Schema("catalog","region")); // debug
+              // cout << endl << "------------------" << endl; // debug
+              oldRecR->Copy(&recR);
+              if(!rightDone) // we've already pushed this last record the last time
+                dupRecsVectorR->push_back(tempRec); // save this record
+            }
+            else{ // no more duplicates; first time we will never go in here
+              dupsEnded = true;
+            }
+
+            if(rightDone){ // set in the previous iteration of this loop
+                           // we go one more instead of stopping in the previous iteration because the last
+                           // record must also be put in the duplicate vector if it's a duplicate
+              readRight = false; // set to false so that we don't read any more from this relation in the next iteration
+                                 // of the outer loop
+              break;
+            }
+            else if(!dupsEnded){
+              rightDone = outputPipeR->Remove(&recR)==0;
+              //recR.Print(new Schema("catalog","region")); // debug
+            }
+          } while(!dupsEnded);
+          delete oldRecR;
+          // if, at this point, rightDone is false, it means there are more records to be read and
+          // the last record that we read was not a duplicate of its predecessors.
+          // if, at this point, rightDone is true, it means there are no more records to be read, however
+          // the last record that we read was not a duplicate of its predecessors.
+          // in either event, this last record that was read into recR must not be lost. We will use it in the
+          // next iteration of the outer do-while loop
+        }
+        else{ // rightDone is true
+          dupRecsVectorR->push_back(&recR); // this is the lone last record left over from the last iteration
+        }
+
+        // cout << endl << endl; // debug
+        // for(int i=0;i<dupRecsVectorL->size();i++){ // debug
+        //   dupRecsVectorL->at(i)->Print(new Schema("catalog","nation")); // debug
+        // } // debug
+
+        // cout << endl << endl; // debug
+        // for(int i=0;i<dupRecsVectorR->size();i++){ // debug
+        //   dupRecsVectorR->at(i)->Print(new Schema("catalog","region")); // debug
+        // } // debug
+
+        // We have all duplicate records in two vectors. Perform a cross-join between them
+        for(int i=0;i<dupRecsVectorL->size();i++){
+          for(int j=0;j<dupRecsVectorR->size();j++){
+            Record newRec;
+            newRec.MergeRecords (dupRecsVectorL->at(i), dupRecsVectorR->at(j), numAttsLeft, numAttsRight, attsToKeep, totalAtts, numAttsLeft);
+            myT->outputPipe->Insert(&newRec);
           }
-          if(!dupsEnded) leftDone = outputPipeL->Remove(&recL)==0;
-        }while(!dupsEnded && !leftDone);
-        delete oldRecL;
+        }
+
+        // Delete the duplicate-holding vectors and recreate them for the next iteration
+        for(int i=0;i<dupRecsVectorR->size();i++){
+          delete dupRecsVectorR->at(i);
+        }
+        dupRecsVectorR = new vector<Record*>();
+
+        for(int i=0;i<dupRecsVectorL->size();i++){
+          delete dupRecsVectorL->at(i);
+        }
+        dupRecsVectorL = new vector<Record*>();
+
       }
-    }while(!leftDone || !rightDone); // make sure to exhaust BOTH BigQs
+      // cout << "leftDone " << leftDone << " rightDone " << rightDone << endl;
+    }while(!leftDone || !rightDone); // make sure to exhaust Both BigQs
     myT->outputPipe->ShutDown();
   }
 
@@ -646,17 +767,22 @@ void* sumRoutine(void* ptr){
   }
 
   // create a new tuple that contains the sum we wanted
-  char* mySum = new char[100];
+  //char* mySum = new char[100];
   Schema* outSchema;
   if(type == Int){
     outSchema = new Schema("out_sch", 1, &IA);
-    sprintf(mySum,"%d|",totalSumInt);
+    std::stringstream sstm;
+    sstm << totalSumInt << "|";
+    string temp = sstm.str();
+    const char* mySum = temp.c_str();
     outRec.ComposeRecord(outSchema,mySum);
   }
   else if(type == Double){
-    // cout << totalSumDouble << endl;
     outSchema = new Schema("out_sch", 1, &DA);
-    sprintf(mySum,"%f|",totalSumDouble);
+    std::stringstream sstm;
+    sstm << totalSumDouble << "|";
+    string temp = sstm.str();
+    const char* mySum = temp.c_str();
     outRec.ComposeRecord(outSchema,mySum);
   }
 

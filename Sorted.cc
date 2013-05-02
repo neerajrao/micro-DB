@@ -87,6 +87,13 @@ int Sorted :: Open (char *f_path) {
     // ignore first line coz it says "sorted", which we already know
     myfile.getline(line,1000);
 
+    // next line is runlen (only added in final demo)
+    // put it into runlen
+    myfile.getline(line,1000);
+    string mystringrunlen (line);
+    istringstream bufferrunlen(mystringrunlen);
+    bufferrunlen >> myRunlen;
+
     // next line is number of attributes
     // put it into numAtts
     myfile.getline(line,1000);
@@ -141,15 +148,15 @@ void Sorted :: Load (Schema &f_schema, char *loadpath) {
   switchToWriting();
 
   // write data record by record to BigQ
-  Record tempRecord;
+  Record* tempRecord = new Record;
   FILE* tempFile = fopen(loadpath, "r");
   if(tempFile==NULL){
     cerr << "ERROR: File " << loadpath << " not found. EXIT !!!\n" << endl;
     exit(1);
   }
   else{
-    while(tempRecord.SuckNextRecord (&f_schema, tempFile) == 1){
-      baseFile->Add(tempRecord); // dump data into BigQ via myInput pipe in Sorted.Add
+    while(tempRecord->SuckNextRecord (&f_schema, tempFile) == 1){
+      Add(*tempRecord); // dump data into BigQ via myInput pipe in Sorted.Add
     }
     fclose(tempFile);
   }

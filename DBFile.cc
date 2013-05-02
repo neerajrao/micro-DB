@@ -90,6 +90,11 @@ int DBFile :: Create (char *f_path, fType f_type, void *startup) {
       if (myfile.is_open())
       {
         myfile << "sorted" << endl;
+        myfile << tempvar->l << endl; // added in final demo. Store runlen in meta file as well because DBFile.Create, which sets
+                                      // Sorted's runlen, is called in a different function (main.cc/createDB()) than DBFile.Load/Add
+                                      // (main.cc/insertDB()) which actually passes the runlen to the BigQ inside Sorted. By that
+                                      // time, runlen is already unset. Saving it in the metafile means we can recover it every
+                                      // time in DBFile.Open
         myfile << printedOrder << endl;
         myfile.close();
       }
