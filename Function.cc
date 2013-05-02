@@ -1,9 +1,9 @@
-
 #include "Function.h"
 #include <iostream>
 #include <stdlib.h>
-Function :: Function () {
+#include <cstring>
 
+Function :: Function () {
   opList = new Arithmatic[MAX_DEPTH];
 }
 
@@ -39,6 +39,11 @@ Type Function :: RecursivelyBuild (struct FuncOperator *parseTree, Schema &mySch
     if (parseTree->leftOperand->code == NAME) {
 
       // first, make sure that the attribute is there
+      // Added in final demo. This code removes relation aliases and the dot from CNF attributes
+      char key[] = ".";
+      if(strpbrk (parseTree->leftOperand->value, key)!=NULL)
+        parseTree->leftOperand->value = strpbrk (parseTree->leftOperand->value, key) + 1;
+
       int myNum = mySchema.Find (parseTree->leftOperand->value);
       if (myNum == -1) {
         cerr << "Error!  Attribute in arithmatic expression was not found.\n";
@@ -184,6 +189,49 @@ Type Function :: RecursivelyBuild (struct FuncOperator *parseTree, Schema &mySch
   }
 }
 
+// Called from Function::Print()
+void Function :: RecursivelyPrint (struct FuncOperator *parseTree, Schema &mySchema) {
+  // different cases; in the first case, simple, unary operation
+  if (parseTree->right == 0 && parseTree->leftOperand == 0 && parseTree->code == '-') {
+    cout<<" - ";
+    // figure out the operations on the subtree
+    RecursivelyPrint (parseTree->leftOperator, mySchema);
+    return ;
+  }
+  else if (parseTree->leftOperator == 0 && parseTree->right == 0) {
+    if (parseTree->leftOperand->code == NAME) {
+      cout << parseTree->leftOperand->value;
+    }
+    else {
+      cout << parseTree->leftOperand->value;
+    }
+    return;
+  }
+  else {
+    cout<<" ( ";
+    RecursivelyPrint (parseTree->leftOperator, mySchema);
+    if (parseTree->code == '+') {
+      cout<<" + ";
+    }
+    else if (parseTree->code == '-') {
+      cout<<" - ";
+    }
+    else if (parseTree->code == '*') {
+      cout<<" * ";
+    }
+    else if (parseTree->code == '/') {
+      cout<<" / ";
+    }
+    else {
+      cerr << "ERROR: Unknown type.\n";
+      exit (1);
+    }
+    // now we recursively handle the right
+    RecursivelyPrint (parseTree->right, mySchema);
+    cout<<" ) ";
+  }
+}
+
 void Function :: GrowFromParseTree (struct FuncOperator *parseTree, Schema &mySchema) {
 
   // zero out the list of operrations
@@ -200,8 +248,10 @@ void Function :: GrowFromParseTree (struct FuncOperator *parseTree, Schema &mySc
 
 }
 
-void Function :: Print () {
-
+void Function :: Print (struct FuncOperator *parseTree, Schema &mySchema) {
+  cout << "    ";
+  RecursivelyPrint (parseTree, mySchema);
+  cout << endl;
 }
 
 Type Function :: Apply (Record &toMe, int &intResult, double &doubleResult) {

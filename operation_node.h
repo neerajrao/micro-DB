@@ -374,6 +374,7 @@ class SumNode : virtual public GenericQTreeNode {
   private:
     Function Func;
     Sum S;
+    FuncOperator *funcOperator; // used for printing
 
   public:
     SumNode(FuncOperator *funcOperator, GenericQTreeNode* &root, int& pipeIDcounter){
@@ -386,6 +387,8 @@ class SumNode : virtual public GenericQTreeNode {
 
       // inherit the schema from its left child
       rschema = left->schema();
+
+      this->funcOperator=funcOperator;
 
       // initialize the Func object that will be passed to the Sum object in Run()
       Func.GrowFromParseTree (funcOperator, *rschema); // constructs CNF predicate
@@ -424,7 +427,7 @@ class SumNode : virtual public GenericQTreeNode {
       cout << "Output pipe ID: " << pipeID << endl;
       PrintOutputSchema(rschema);
       cout << "Corresponding Function: " << endl;
-      Func.Print(); // TODO: Implement Print() in Function.cc
+      Func.Print(funcOperator,*rschema);
       cout << "***************************" << endl;
     };
 
@@ -454,6 +457,7 @@ class Group_byNode : virtual public GenericQTreeNode {
     GroupBy G;
     myAtt* orderMakerAtts; // used to create the OrderMaker passed to GroupBy in Run
     OrderMaker grp_order; // used to create the OrderMaker passed to GroupBy in Run
+    FuncOperator *funcOperator; // used for printing
 
   public:
     Group_byNode(NameList *gAtts, FuncOperator *funcOperator, GenericQTreeNode* &root, int& pipeIDcounter){
@@ -509,6 +513,8 @@ class Group_byNode : virtual public GenericQTreeNode {
 
       rschema = new Schema("out_sch", numGroupingAtts, outAtts);
 
+      this->funcOperator=funcOperator;
+
       grp_order.initOrderMaker(numGroupingAtts-1,orderMakerAtts);
 
       pipeID = pipeIDcounter;
@@ -532,6 +538,8 @@ class Group_byNode : virtual public GenericQTreeNode {
       PrintOutputSchema(rschema);
       cout << "Grouping Attributes:" << endl;
       PrintNameList(&GAtts);
+      cout << "Aggregate Function:" << endl;
+      Func.Print(funcOperator,*rschema);
       cout << "***************************" << endl;
     };
 

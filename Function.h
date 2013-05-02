@@ -42,6 +42,12 @@ public:
   // prints out the function to the screen
   void Print ();
 
+  // added in final demo. Used to print in operation_node.h
+  void Print(struct FuncOperator *parseTree, Schema &mySchema);
+
+  // helper function for Print(struct FuncOperator *parseTree, Schema &mySchema)
+  void RecursivelyPrint (struct FuncOperator *parseTree, Schema &mySchema);
+
   // applies the function to the given record and returns the result
   Type Apply (Record &toMe, int &intResult, double &doubleResult);
 };
