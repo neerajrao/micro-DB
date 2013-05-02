@@ -83,12 +83,24 @@ void createDB(){
 }
 
 /*------------------------------------------------------------------------------
+ * Check if a file exists. We use it in demosetup to determine if the bin files
+ * already exist. If they do, we don't need to load them afresh.
+ * Source: http://www.cplusplus.com/forum/general/1796/#msg6410
+ *----------------------------------------------------------------------------*/
+bool fexists(const char *filename)
+{
+  ifstream ifile(filename);
+  return ifile;
+}
+
+/*------------------------------------------------------------------------------
  * Meant only for Project Demo. Normally, this code should be called via createDB
  *----------------------------------------------------------------------------*/
 void demoSetup(){
   cout << "--------------------------------------------" << endl;
   cout << "Creating all relation schemas" << endl;
   char db_path[100]; // construct path of the saved state file
+  // save the state in savedState.txt for the next time we open up the database
   sprintf (db_path, "%s%s", dbfile_dir, savedStateFile);
   ofstream myfile;
   myfile.open (db_path, ofstream::out);
@@ -103,23 +115,31 @@ void demoSetup(){
     myfile << customer << endl;
   }
   myfile.close();
+
+  // create all the relations and assign it to DBinfo
   RestoreDBState();
 
   cout << "--------------------------------------------" << endl;
-  cout << "Inserting data..." << endl << endl;
+  cout << "Creating bin files..." << endl << endl;
   ifstream infile;
   infile.open(db_path);
   string buffer;
   char tbl_path[100]; // construct path of the tpch bulk data file
   while (getline(infile, buffer)){ // while the file has more lines.
-    sprintf (tbl_path, "%s%s.tbl", tpch_dir, (char*)buffer.c_str());
-    cout << "Inserting data from " << tbl_path << "..." << endl;
-    DBFile dbfile;
-    dbfile.Create (DBinfo[buffer]->path(), heap, NULL);
-    dbfile.Close();
-    dbfile.Open (DBinfo[buffer]->path());
-    dbfile.Load (*(DBinfo[buffer]->schema ()), tbl_path);
-    dbfile.Close();
+    if(fexists(DBinfo[buffer]->path())){
+      cout << DBinfo[buffer]->path() << "\t already exists." << endl;
+    }
+    else{
+      DBFile dbfile;
+      cout << DBinfo[buffer]->path() << " does not exist. Creating it." << endl;
+      sprintf (tbl_path, "%s%s.tbl", tpch_dir, (char*)buffer.c_str());
+      cout << "Inserting data from " << tbl_path << "..." << endl;
+      dbfile.Create (DBinfo[buffer]->path(), heap, NULL);
+      dbfile.Close();
+      dbfile.Open (DBinfo[buffer]->path());
+      dbfile.Load (*(DBinfo[buffer]->schema ()), tbl_path);
+      dbfile.Close();
+    }
   }
   cout << "--------------------------------------------" << endl << endl;
   infile.close();
