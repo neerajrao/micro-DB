@@ -4,6 +4,7 @@
  ******************************************************************************/
 #include "RelOp.h"
 #include "BigQ.h"
+#include "Defs.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -749,8 +750,6 @@ void* sumRoutine(void* ptr){
   ComparisonEngine ceng;
   int totalSumInt = 0, tempInt = 0;
   double totalSumDouble = 0.0, tempDouble = 0.0;
-  Attribute IA = {"int", Int};
-  Attribute DA = {"double", Double};
   Type type;
   while(myT->inputPipe->Remove(&currRec)!=0){ // keep reading from the input pipe as long it has elements in it
     type = myT->func->Apply(currRec,tempInt,tempDouble);
@@ -768,9 +767,12 @@ void* sumRoutine(void* ptr){
 
   // create a new tuple that contains the sum we wanted
   //char* mySum = new char[100];
+  //Attribute IA = {"Sum", Int};
+  Attribute DA = {"Sum", Double};
   Schema* outSchema;
   if(type == Int){
-    outSchema = new Schema("out_sch", 1, &IA);
+    //outSchema = new Schema("out_sch", 1, &IA);
+    outSchema = new Schema("out_sch", 1, &DA);
     std::stringstream sstm;
     sstm << totalSumInt << "|";
     string temp = sstm.str();

@@ -29,7 +29,7 @@ char *fileName = "Statistics.txt";
 
 // Use a hash to store the relation name alias.
 unordered_map<string, string> relAlias;
-
+unordered_map<string, string> nodeAlias;
 /*------------------------------------------------------------------------------
  * Used to record the intermediate Qtree.
  * It connects the relation name to its tree. Each relation's tree has the operations
@@ -79,6 +79,8 @@ void ConvertOrList(struct OrList *pOr) {
  * Tree nodes can be Join or Select so we only work with Join and Select
  * ANDList nodes
  *----------------------------------------------------------------------------*/
+
+
 void AndListNode2QTreeNode(struct AndList &dummy, char* RelName[], int numToJoin, int& pipeIDcounter){
   // cout << RelName[0] << " " << RelName[1] << " " << numToJoin << endl; // debug
   string leftRelName(RelName[0]), rightRelName; // debug
@@ -92,9 +94,10 @@ void AndListNode2QTreeNode(struct AndList &dummy, char* RelName[], int numToJoin
 
   if(numToJoin == 1){ // selection operation
     // The corresponding tree node already exists, it is a selection_pipe operation
-    if(relNameToTreeMap.count(leftRelName)){
+    //this line is changed so that select pipe don't get called when a preious erased (by join) relation appears again.
+    if(relNameToTreeMap.count(leftRelName)||nodeAlias.count(leftRelName)){
       // cout << leftRelName << " already in map" << endl; // debug
-      NewQNode = new Selection_PNode(dummy, leftRelName, relNameToTreeMap, pipeIDcounter);
+      NewQNode = new Selection_PNode(dummy, leftRelName, relNameToTreeMap, pipeIDcounter,nodeAlias);
     }
     // The first selection performed on a relation is a SelectFile.
     else{
@@ -105,7 +108,8 @@ void AndListNode2QTreeNode(struct AndList &dummy, char* RelName[], int numToJoin
   else if(numToJoin == 2){ // equi-join operator
     rightRelName.assign(RelName[1]);
     // cout << "join on " << leftRelName << " " << rightRelName << endl; // debug
-    NewQNode = new JoinNode(dummy, leftRelName, rightRelName, relNameToTreeMap, pipeIDcounter);
+    //!!!function definition also changed.
+    NewQNode = new JoinNode(dummy, leftRelName, rightRelName, relNameToTreeMap, pipeIDcounter,nodeAlias);
   }
   else
     cerr << "ERROR: Join must have two input relations!!!" << endl;
@@ -113,6 +117,7 @@ void AndListNode2QTreeNode(struct AndList &dummy, char* RelName[], int numToJoin
   // update the relNameToTreeMap, store back new treeNode/subtree pointer.
   relNameToTreeMap[leftRelName]=NewQNode;
 }
+///!!!
 
 /*------------------------------------------------------------------------------
  * Recursive routine that reorders the AndList greedily.
@@ -374,6 +379,10 @@ void queryPlanning(){
 
   cout << endl << "Generated Query Plan: " << endl; // InOrder print out the tree.
   InOrderPrintQTree(QueryRoot);
+  ///!!!! clear up the alias hash for next execution.
+  relAlias.clear();
+  nodeAlias.clear();
+  ///!!!end
   cout << endl << "--------------------------------------------" << endl;
   cout <<         "           Query optimization done";
   cout << endl << "--------------------------------------------" << endl;

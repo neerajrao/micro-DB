@@ -12,6 +12,7 @@
 #include "ParseTree.h"
 #include "Comparison.h"
 #include "a3utils.h"
+#include "Defs.h"
 
 using namespace std;
 extern unordered_map<string, relation*> DBinfo;
@@ -82,8 +83,12 @@ class Selection_PNode : virtual public GenericQTreeNode {
     CNF cnf_pred;
     SelectPipe SP;
   public:
-    Selection_PNode(struct AndList &dummy, string &RelName, unordered_map<string, GenericQTreeNode*> &relNameToTreeMap, int pipeIDcounter){
+    Selection_PNode(struct AndList &dummy, string &RelName, unordered_map<string, GenericQTreeNode*> &relNameToTreeMap, int pipeIDcounter,unordered_map<string, string> &nodeAlias){
       GenericQTreeNode();
+
+      if(nodeAlias.count(RelName))
+        RelName=nodeAlias[RelName];
+
       this->RelName = RelName;
 
       GenericQTreeNode* lSubT = NULL;
@@ -220,8 +225,6 @@ class ProjectNode : virtual public GenericQTreeNode {
 
   public:
     ProjectNode(NameList *atts, GenericQTreeNode* &root, int& pipeIDcounter){
-      // There was no project attribute in the input CNF; no need to add a ProjectNode to the query tree
-
       GenericQTreeNode();
       left = root;
       root = this;
@@ -375,37 +378,26 @@ class SumNode : virtual public GenericQTreeNode {
     Function Func;
     Sum S;
     FuncOperator *funcOperator; // used for printing
+    Schema* inSchema;
+    Type returnType;
 
   public:
     SumNode(FuncOperator *funcOperator, GenericQTreeNode* &root, int& pipeIDcounter){
-      // There was no sum clause in the input CNF; no need to add a SumNode to the query tree
-
-
       GenericQTreeNode();
       left = root;
       root = this;
 
       // inherit the schema from its left child
-      rschema = left->schema();
+      inSchema = left->schema();
 
       this->funcOperator=funcOperator;
 
       // initialize the Func object that will be passed to the Sum object in Run()
-      Func.GrowFromParseTree (funcOperator, *rschema); // constructs CNF predicate
+      Func.GrowFromParseTree (funcOperator, *inSchema); // constructs CNF predicate
 
-      // we must craft an output schema that will have only one attribute - either an Int or a Double
-      // depending on the type of the attribute that we are summing on. We use a dummy Function object
-      // to do this.
-      Function tempFunc;
-      Type outputType = tempFunc.RecursivelyBuild(funcOperator,*rschema);
-      if(outputType==Int){
-        Attribute IA = {"int", Int};
-        rschema = new Schema("out_sch", 1, &IA);
-      }
-      else if(outputType==Double){
-        Attribute DA = {"double", Double};
-        rschema = new Schema("out_sch", 1, &DA);
-      }
+      // Use double for int as well
+      Attribute DA = {"Sum", Double};
+      rschema = new Schema("outSchema",1,&DA);
 
       pipeID = pipeIDcounter;
       pipeIDcounter++; // increment for next guy
@@ -569,8 +561,13 @@ class JoinNode : virtual public GenericQTreeNode {
     Join J;
 
   public:
-    JoinNode(struct AndList &dummy, string &RelName0, string &RelName1, unordered_map<string,GenericQTreeNode*> &relNameToTreeMap, int& pipeIDcounter){
+    JoinNode(struct AndList &dummy, string &RelName0, string &RelName1, unordered_map<string,GenericQTreeNode*> &relNameToTreeMap, int& pipeIDcounter,unordered_map<string, string> &nodeAlias){
       GenericQTreeNode();
+
+      if(nodeAlias.count(RelName0))
+        RelName0=nodeAlias[RelName0];
+      if(nodeAlias.count(RelName1))
+        RelName1=nodeAlias[RelName1];
       this->RelName0 = RelName0;
       this->RelName1 = RelName1;
       GenericQTreeNode* lSubT=NULL,*rSubT=NULL;
@@ -623,6 +620,13 @@ class JoinNode : virtual public GenericQTreeNode {
       // the right attribute will be joined (eliminated). delete the right attribute's subtree if it exists.
       if(relNameToTreeMap.count(RelName1))
         relNameToTreeMap.erase(RelName1);
+
+      //added the removed RelName to nodeAlias hash, so that Select File and future joins can retrieves the latest merged schema.
+      nodeAlias[RelName1]=RelName0;
+      // replace all the names mapping to RelName1 in the hash to RelName0.
+      for(auto it = nodeAlias.begin();it!=nodeAlias.end();it++){
+        if((it->second).compare(RelName1)==0)it->second = RelName0;
+      }
 
       // create the schema that will be used for parents of this node
       rschema=left->schema();
