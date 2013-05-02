@@ -104,7 +104,7 @@ void* selectFileRoutine(void* ptr){
   while(myT->dbfile->GetNext(currRec,*(myT->cnf),*(myT->literal))){ // keep reading from the input file as long it has elements in it
     myT->outputPipe->Insert(&currRec);
   }
-  cout << "select file calling shutdown" << endl;
+  cout << "select file calling shutdown" << endl; // debug
   myT->outputPipe->ShutDown();
   return 0;
 }

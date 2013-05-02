@@ -5,7 +5,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include<iostream>
 #include "Defs.h"
 #include "ParseTree.h"
 #include "Schema.h"
@@ -71,6 +71,10 @@ public:
   // prints the contents of the record; this requires
   // that the schema also be given so that the record can be interpreted
   void Print (Schema *mySchema);
+
+  // Prints the contents of the record to an output file.
+  // Added in the final demo. Called from setOutput() in main.cc
+  void Print (Schema *mySchema, ostream& out);
 
   // prints the contents of the record to a File; this requires
   // that the schema also be given so that the record can be interpreted

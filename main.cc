@@ -109,12 +109,12 @@ void insertDB(){
     int counter = 0;
     while (dbfile.GetNext (temp) == 1) {
       counter += 1;
-      temp.Print (new Schema("catalog","nation"));
-      //temp.Print (rel->schema());
+      temp.Print (rel->schema(),out);
       if (counter % 10000 == 0) {
-        cout << counter << "\n";
+        out << counter << "\n";
       }
     }
+    out.flush();
     dbfile.Close();
   }
 }
@@ -210,6 +210,7 @@ int main () {
        dropTable();
        break;
      case 4: cout << "SET OUTPUT command." << endl << endl;
+       setOutput();
        break;
      case 5:
        Qrenaming();

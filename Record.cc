@@ -422,6 +422,10 @@ void Record :: MergeRecords (Record *left, Record *right, int numAttsLeft, int n
   }
 }
 
+/**************************************************************
+ * Prints the contents of the record to an output file.
+ * Added in the final demo. Called from setOutput() in main.cc
+ *************************************************************/
 void Record :: Print (Schema *mySchema) {
 
   int n = mySchema->GetNumAtts();
@@ -466,6 +470,52 @@ void Record :: Print (Schema *mySchema) {
   }
 
   cout << "\n";
+}
+
+void Record :: Print (Schema *mySchema, ostream& out) {
+
+  int n = mySchema->GetNumAtts();
+  Attribute *atts = mySchema->GetAtts();
+
+  // loop through all of the attributes
+  for (int i = 0; i < n; i++) {
+
+    // print the attribute name
+    out << atts[i].name << ": ";
+
+    // use the i^th slot at the head of the record to get the
+    // offset to the correct attribute in the record
+    int pointer = ((int *) bits)[i + 1];
+
+    // here we determine the type, which given in the schema;
+    // depending on the type we then print out the contents
+    out << "[";
+
+    // first is integer
+    if (atts[i].myType == Int) {
+      int *myInt = (int *) &(bits[pointer]);
+      out << *myInt;
+
+    // then is a double
+    } else if (atts[i].myType == Double) {
+      double *myDouble = (double *) &(bits[pointer]);
+      out << *myDouble;
+
+    // then is a character string
+    } else if (atts[i].myType == String) {
+      char *myString = (char *) &(bits[pointer]);
+      out << myString;
+    }
+
+    out << "]";
+
+    // print out a comma as needed to make things pretty
+    if (i != n - 1) {
+      out << ", ";
+    }
+  }
+
+  out << "\n";
 }
 
 

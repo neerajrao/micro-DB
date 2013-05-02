@@ -19,6 +19,11 @@ using namespace std;
 int pipesz = 100; // buffer sz allowed for each pipe
 int buffsz = 100; // pages of memory allowed for operations
 
+// variables used for setOutput
+streambuf * buf= std::cout.rdbuf();
+ofstream of;
+ostream out(buf);
+
 // Extern variables from yacc
 extern struct FuncOperator *finalfunc;
 extern FILE *yyin;
@@ -34,7 +39,7 @@ extern "C"  int distinctAtts; // 1 if there is a DISTINCT in a non-aggregate que
 extern "C"  int distinctFunc;  // 1 if there is a DISTINCT in an aggregate query
 extern "C"  struct SchemaList *schemas; // the list of tables and aliases in the query
 extern "C"  char* bulkFileName; // bulk loading file name string
-extern "C"  struct NameList *outputFileName; // output file name or STDOUT string
+extern "C"  char* outputFileName; // output file name or STDOUT string
 extern "C"  int commandFlag; // 1 if the command is a create table command.
                              // 2 if the command is a Insert into command
                              // 3 if the command is a drop table command
@@ -146,11 +151,27 @@ int clear_pipe (Pipe &in_pipe, Schema *schema, bool print) {
   int cnt = 0;
   while (in_pipe.Remove (&rec)) {
     if (print) {
-      rec.Print (schema);
+      rec.Print (schema,out);
     }
     cnt++;
   }
+  out.flush();
   return cnt;
+}
+
+/*------------------------------------------------------------------------------
+ * write output to a file
+ *----------------------------------------------------------------------------*/
+void setOutput(){
+  char* iter = outputFileName ;
+  cout << "Output will now be redirected to " << outputFileName << endl;
+  if(strcmp(iter,"STDOUT")!=0) {
+    of.open(iter);
+    buf = of.rdbuf();
+  } else {
+    buf = std::cout.rdbuf();
+  }
+  out.rdbuf(buf);
 }
 
 /*------------------------------------------------------------------------------

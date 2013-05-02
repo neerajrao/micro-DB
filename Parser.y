@@ -24,7 +24,7 @@
   struct SchemaList *schemas; // the list of tables and aliases in the query
   struct CreateTableType* createTableType; // type of table to create along with sorting attributes (if any)
   char* bulkFileName; // bulk loading file name string
-  struct NameList *outputFileName; // output file name or STDOUT string
+  char* outputFileName; // output file name or STDOUT string
   int commandFlag; // 1 if the command is a create table command.
                    // 2 if the command is a Insert into command
                    // 3 if the command is a drop table command
@@ -179,7 +179,7 @@ DR_TABLE: DROP TABLE Tables
   commandFlag=3;
 };
 
-SET_OUTPUT: SET OUTPUT Atts
+SET_OUTPUT: SET OUTPUT String
 {
   outputFileName=$3;
   commandFlag=4;

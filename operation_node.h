@@ -191,7 +191,7 @@ class Selection_FNode : virtual public GenericQTreeNode {
     void Run(){
       // cout << "selectfile started" << endl; // debug
       dbfile.Open (rel->path());
-      dbfile.MoveFirst();
+      //dbfile.MoveFirst();
       SF.Use_n_Pages (buffsz);
       SF.Run (dbfile, *outpipe, cnf_pred, literal); // Select File takes its input from the disk.
     };
