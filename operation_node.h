@@ -468,8 +468,7 @@ class Group_byNode : virtual public GenericQTreeNode {
       Func.GrowFromParseTree (funcOperator, *rschema); // constructs CNF predicate
 
       // We must craft an output schema that will have
-      // 1. first attribute -- either an Int or a Double (we use a dummy Function
-      //    object below to find out which)-- for the attribute that we are summing on .
+      // 1. first attribute -- a Double (we use a Double even for ints)
       // 2. remaining attributes -- all the grouping attributes
       int numGroupingAtts = 0;
       do{
@@ -484,13 +483,7 @@ class Group_byNode : virtual public GenericQTreeNode {
       Attribute* outAtts = new Attribute[numGroupingAtts]; // used to create GroupBy's output schema
                                                            // that will be used to print in clear_pipe
 
-      // add the first attribute (either an Int or a Double depending on the summing function)
-      Function tempFunc;
-      Type outputType = tempFunc.RecursivelyBuild(funcOperator,*(left->schema()));
-      if(outputType==Int)
-        outAtts[0] = {"Sum", Int};
-      else if(outputType==Double)
-        outAtts[0] = {"Sum", Double};
+      outAtts[0] = {"Sum", Double};
 
       // add the remaining attributes (the grouping attributes)
       int i=0;

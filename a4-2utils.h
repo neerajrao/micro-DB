@@ -370,6 +370,8 @@ void queryPlanning(){
   relNameToTreeMap.clear(); // clear any mappings from past SQL commands
                             // needed because we accept SQL commands in a while loop
                             // in main.cc
+  relAlias.clear(); //clear up the alias hash for next execution.
+  nodeAlias.clear(); //clear up the alias hash for next execution.
   Statistics s;
   cout << endl << "--------------------------------------------" << endl;
   cout <<         "         Starting query optimization";
@@ -379,10 +381,6 @@ void queryPlanning(){
 
   cout << endl << "Generated Query Plan: " << endl; // InOrder print out the tree.
   InOrderPrintQTree(QueryRoot);
-  ///!!!! clear up the alias hash for next execution.
-  relAlias.clear();
-  nodeAlias.clear();
-  ///!!!end
   cout << endl << "--------------------------------------------" << endl;
   cout <<         "           Query optimization done";
   cout << endl << "--------------------------------------------" << endl;
