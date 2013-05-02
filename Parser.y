@@ -74,6 +74,8 @@
 %token OR
 %token QUIT
 %token DEMOSETUP
+%token NONE
+%token STDOUT
 %token ON
 
 %type <myOrList> OrList
@@ -190,6 +192,16 @@ DR_TABLE: DROP TABLE Tables
 SET_OUTPUT: SET OUTPUT String
 {
   outputFileName=$3;
+  commandFlag=4;
+}
+| SET OUTPUT STDOUT
+{
+  outputFileName="STDOUT";
+  commandFlag=4;
+}
+| SET OUTPUT NONE
+{
+  outputFileName="NONE";
   commandFlag=4;
 };
 

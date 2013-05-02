@@ -72,6 +72,10 @@ void yyerror(char*s);
 
 "demosetup"    return(DEMOSETUP);
 
+"NONE"    return(NONE);
+
+"STDOUT"    return(STDOUT);
+
 "ON"			return(ON);
 
 "("			return('(');

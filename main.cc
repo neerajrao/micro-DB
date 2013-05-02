@@ -224,6 +224,7 @@ void Qrenaming(){
 
 int main () {
   setup ();
+  bool performExecution = true;
   while(1){
     cout << "--------------------------------------------" << endl;
     cout << "Enter SQL command, then press Ctrl-D" << endl;
@@ -255,12 +256,21 @@ int main () {
        dropTable();
        break;
      case 4: cout << "SET OUTPUT command." << endl << endl;
+       if(strcmp(outputFileName,"NONE")==0) { // SET OUTPUT NONE
+         performExecution = false; // disable query execution
+         outputFileName = "STDOUT"; // so that setOutput redirects to STDOUT
+         cout << "INFO: Query execution disabled" << endl;
+       }
+       else{
+         performExecution = true; // re-enable query execution if disabled
+       }
        setOutput();
        break;
      case 5:
        Qrenaming();
        queryPlanning();
-       queryExecution();
+       if(performExecution)
+         queryExecution();
        break;
      case 6:
        cout << endl << "Exiting database" << endl;

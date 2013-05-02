@@ -164,7 +164,7 @@ int clear_pipe (Pipe &in_pipe, Schema *schema, bool print) {
  *----------------------------------------------------------------------------*/
 void setOutput(){
   char* iter = outputFileName ;
-  cout << "Output will now be redirected to " << outputFileName << endl;
+  cout << "INFO: Output will now be redirected to " << outputFileName << endl << endl;
   if(strcmp(iter,"STDOUT")!=0) {
     of.open(iter);
     buf = of.rdbuf();
