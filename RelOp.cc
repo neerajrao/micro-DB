@@ -272,7 +272,8 @@ void* joinRoutine(void* ptr){
         numAttsLeft = smallerRelRecBackup.GetNumAtts();
         numAttsRight = largerRelRec.GetNumAtts();
         numAttsJoinRight = rightOrderMaker.getNumAtts();
-        totalAtts = numAttsLeft + numAttsRight - numAttsJoinRight;
+        totalAtts = numAttsLeft + numAttsRight; // we preserve all input attributes. This
+                                                // fixes bugs with q1, q3 in the final demo queries.execute.
         attsToKeep = new int[totalAtts];
         int* rightJoinAtts = new int[numAttsJoinRight];
         rightJoinAtts = rightOrderMaker.getWhichAtts();
@@ -442,7 +443,8 @@ void* joinRoutine(void* ptr){
         numAttsLeft = recL.GetNumAtts();
         numAttsRight = recR.GetNumAtts();
         numAttsJoinRight = rightOrderMaker.getNumAtts();
-        totalAtts = numAttsLeft + numAttsRight - numAttsJoinRight;
+        totalAtts = numAttsLeft + numAttsRight; // we preserve all input attributes. This
+                                                // fixes bugs with q1, q3 in the final demo queries.execute.
         attsToKeep = new int[totalAtts];
         int* rightJoinAtts = new int[numAttsJoinRight];
         rightJoinAtts = rightOrderMaker.getWhichAtts();
