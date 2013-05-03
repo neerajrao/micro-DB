@@ -6,6 +6,7 @@
 #include <cstdio>
 #include <fstream>
 #include <boost/timer.hpp>
+
 using namespace boost;
 
 /*------------------------------------------------------------------------------
@@ -246,7 +247,7 @@ void Qrenaming(){
 
 int main () {
   setup ();
-  timer t;
+  timer t; // used to record and print out time for execution of query
   bool performExecution = true;
   while(1){
     cout << "--------------------------------------------" << endl;
@@ -257,6 +258,7 @@ int main () {
 
     yyparse();
     t.restart();
+
     /* *****************************************
      * 1 if the command is a create table command.
      * 2 if the command is an Insert into command
@@ -311,7 +313,7 @@ int main () {
        break;
     }
 
-    cout<<"time elapsed: "<<t.elapsed()<<"s. "<<endl;
+    cout << "time elapsed: " << t.elapsed() << "s. " << endl << endl;
     commandFlag=-1;
   }
 

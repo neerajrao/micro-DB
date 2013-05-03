@@ -75,6 +75,7 @@ void Statistics :: CopyRel(char *oldName, char *newName) {
  ******************************************************************************/
 void Statistics :: Read(char *fromWhere) {
   Relation_Size_Atts.clear();
+  attAlias.clear();
   ifstream infile;
   stringstream converter;
   infile.open(fromWhere);
@@ -450,7 +451,6 @@ int Statistics :: evalAndList(struct AndList *pAnd, char **relNames, int numToJo
 
 
     // write back the result after every OR operation.
-//    cout<<endl<<"ind "<<ind<<" Name "<<relNames[ind]<<endl;
     Relation_Size_Atts[relNames[ind]].first=(int)ORDresult;
     // aggregation.
     if(sameAndAttDiffValue){ // if two different-valued equal selections are being applied on the
@@ -484,7 +484,6 @@ double Statistics :: Estimate(struct AndList *parseTree, char **relNames, int nu
   bool flag = true;
   lastHandledRel=0;
   copy.evalAndList(parseTree, relNames, numToJoin,ANDDresult,flag);
-//  Write("guang2File");
   return ANDDresult;
 }
 
