@@ -70,13 +70,19 @@ void yyerror(char*s);
 
 "quit"    return(QUIT);
 
-"demosetup"    return(DEMOSETUP);
+"NONE"			return(NONE);
 
-"NONE"    return(NONE);
+"STDOUT"			return(STDOUT);
 
-"STDOUT"    return(STDOUT);
+"setupdemo"			return(SETUPDEMO);
 
 "ON"			return(ON);
+
+"UPDATE"			return(UPDATE);
+
+"STATISTICS"			return(STATISTICS);
+
+"for"			return(FOR);
 
 "("			return('(');
 

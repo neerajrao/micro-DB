@@ -25,7 +25,7 @@ using namespace std;
 
 GenericQTreeNode* QueryRoot; // after executing queryPlanning, the root should be saved here!!
 // Serialized form of the Statistics object
-char *fileName = "Statistics.txt";
+char *statsFileName = "Statistics.txt";
 
 // Use a hash to store the relation name alias.
 unordered_map<string, string> relAlias;
@@ -372,12 +372,11 @@ void queryPlanning(){
                             // in main.cc
   relAlias.clear(); //clear up the alias hash for next execution.
   nodeAlias.clear(); //clear up the alias hash for next execution.
-  Statistics s;
   cout << endl << "--------------------------------------------" << endl;
   cout <<         "         Starting query optimization";
   cout << endl << "--------------------------------------------" << endl;
-  s.Read(fileName); // init Statistics object from serialized text file
-  PermutationTreeGen(whereClausePredicate, tables, s);
+  stats.Read(statsFileName); // init Statistics object from serialized text file
+  PermutationTreeGen(whereClausePredicate, tables, stats);
 
   cout << endl << "Generated Query Plan: " << endl; // InOrder print out the tree.
   InOrderPrintQTree(QueryRoot);
@@ -409,6 +408,100 @@ void queryExecution(){
   cout << endl << "--------------------------------------------" << endl;
   cout <<         "           Query execution done";
   cout << endl << "--------------------------------------------" << endl;
+}
+
+/*------------------------------------------------------------------------------
+ * Update Statistics
+ * Called in main.cc
+ *----------------------------------------------------------------------------*/
+void updateStatistics(){
+  char* relName = tables->tableName;
+  if(DBinfo.count(relName)){
+    // The user has specified which table he wants to update but we must not
+    // lose all the other extant Statistics information. Hence, start by reading
+    // the current Statistics.txt file and then update only the relation the
+    // user specified using Statistics.AddRel and Statistics.AddAtt
+    stats.Read(statsFileName);
+
+    cout << "INFO: Updating Statistics object" << endl;
+    cout << "      " << "Relation: " << relName << endl;
+    rel = DBinfo[relName];
+
+    // update the total number of tuples in the relation
+    // create a SelectFile with a blank CNF (equivalent to
+    // SELECT ALL) and then simply read out all the records,
+    // keeping count of how many you read
+    DBFile dbfile;
+    dbfile.Open(rel->path());
+    SelectFile sf;
+    sf.Use_n_Pages (buffsz);
+    Pipe outPipe(pipesz);
+
+    // create an empty CNF to give to the SelectFile so it acts
+    // as a SELECT ALL
+    Record literal;
+    CNF emptyCNF;
+    AndList emptyAndList;
+    emptyAndList.left = NULL;
+    emptyAndList.rightAnd = NULL;
+    emptyCNF.GrowFromParseTree (&emptyAndList, rel->schema(), literal);
+
+    // start counting the records from the table
+    sf.Run(dbfile,outPipe,emptyCNF,literal);
+    int cnt = clear_pipe (outPipe, rel->schema (), false);
+    sf.WaitUntilDone();
+    cout << "      " << "Total recs: " << cnt << endl;
+    stats.AddRel(relName,cnt);
+    dbfile.Close();
+
+    // for each attribute in the relation, update the number of
+    // unique values for the attribute. Do this by
+    // SF's (with a blank CNF) -> Project (on the attribute) -> DuplicateRemoval
+    cout << "      " << "Attributes:" << endl;
+    Attribute* relAtts = rel->schema()->GetAtts();
+    int totalAtts = rel->schema()->GetNumAtts();
+    for(int i=0;i<totalAtts;i++){
+      // SelectFile
+      DBFile dbfiletemp;
+      Record literaltemp;
+      dbfiletemp.Open(rel->path());
+      SelectFile SF;
+      SF.Use_n_Pages (buffsz);
+      Pipe sfOutputPipe(pipesz);
+
+      // Project
+      Project P;
+      P.Use_n_Pages(buffsz);
+      Pipe pOutputPipe(pipesz);
+      int keepMe[] = {i};
+
+      // DuplicateRemoval
+      DuplicateRemoval D;
+      Schema dSchema ("duprem", 1, &relAtts[i]);
+      D.Use_n_Pages(buffsz); //this was missing in the original test.cc. Use_n_Pages MUST be called for Join, DuplicateRemoval and GroupBy
+      Pipe dOutputPipe(pipesz);
+
+      // Start counting unique records
+      SF.Run(dbfiletemp,sfOutputPipe,emptyCNF,literaltemp);
+      P.Run(sfOutputPipe, pOutputPipe, keepMe, totalAtts, 1);
+      D.Run(pOutputPipe, dOutputPipe, dSchema);
+
+      int cnt = clear_pipe (dOutputPipe, &dSchema, false);
+
+      SF.WaitUntilDone();
+      P.WaitUntilDone();
+      D.WaitUntilDone();
+
+      cout << "        " << relAtts[i].name << ": " << cnt << endl;
+      dbfiletemp.Close();
+      stats.AddAtt(relName, relAtts[i].name, cnt);
+    }
+    stats.Write(statsFileName); // make changes persistent by writing it to Statistics.txt
+    cout << "INFO: Statistics changes made persistent in " << statsFileName << endl << endl;
+  }
+  else{
+    cout << "ERROR: Table " << relName << " does not exist." << endl;
+  }
 }
 
 #endif  /* UTILS_H */

@@ -83,7 +83,7 @@ void createDB(){
 }
 
 /*------------------------------------------------------------------------------
- * Check if a file exists. We use it in demosetup to determine if the bin files
+ * Check if a file exists. We use it in setupDemo to determine if the bin files
  * already exist. If they do, we don't need to load them afresh.
  * Source: http://www.cplusplus.com/forum/general/1796/#msg6410
  *----------------------------------------------------------------------------*/
@@ -96,7 +96,7 @@ bool fexists(const char *filename)
 /*------------------------------------------------------------------------------
  * Meant only for Project Demo. Normally, this code should be called via createDB
  *----------------------------------------------------------------------------*/
-void demoSetup(){
+void setupDemo(){
   cout << "--------------------------------------------" << endl;
   cout << "Creating all relation schemas" << endl;
   char db_path[100]; // construct path of the saved state file
@@ -127,7 +127,7 @@ void demoSetup(){
   char tbl_path[100]; // construct path of the tpch bulk data file
   while (getline(infile, buffer)){ // while the file has more lines.
     if(fexists(DBinfo[buffer]->path())){
-      cout << DBinfo[buffer]->path() << "\t already exists." << endl;
+      cout << DBinfo[buffer]->path() << " already exists. No need to create." << endl;
     }
     else{
       DBFile dbfile;
@@ -261,7 +261,8 @@ int main () {
      * 4 if the command is a set output command
      * 5 if the command is a SQL command
      * 6 if the command is 'quit'
-     * 7 if the command is 'demosetup'
+     * 7 if the command is 'setupDemo'
+     * 8 if the command is 'UPDATE STATISTICS'
      *******************************************/
    switch (commandFlag){
      case 1:
@@ -297,7 +298,10 @@ int main () {
        exit(0);
        break;
      case 7:
-       demoSetup();
+       setupDemo();
+       break;
+     case 8:
+       updateStatistics();
        break;
      case -1:
        cout << "ERROR: Please check your command syntax." << endl;

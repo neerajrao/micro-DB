@@ -31,7 +31,8 @@
                    // 4 if the command is a set output command
                    // 5 if the command is a SQL command
                    // 6 if the command is 'quit'
-                   // 7 if the command is 'demosetup'
+                   // 7 if the command is 'setupdemo'
+                   // 8 if the command is 'UPDATE STATISTICS'
   int NumAtt=0;
 %}
 
@@ -73,10 +74,13 @@
 %token AND
 %token OR
 %token QUIT
-%token DEMOSETUP
+%token SETUPDEMO
 %token NONE
 %token STDOUT
 %token ON
+%token UPDATE
+%token STATISTICS
+%token FOR
 
 %type <myOrList> OrList
 %type <myAndList> AndList
@@ -105,14 +109,21 @@ COMMANDLINE: SQL
 | SET_OUTPUT
 | CR_TABLE
 | QUIT_PROGRAM
-| DEMO_SETUP;
+| SETUP_DEMO
+| UPDATE_STATISTICS;
+
+UPDATE_STATISTICS: UPDATE STATISTICS FOR Tables
+{
+  tables=$4;
+  commandFlag=8;
+};
 
 QUIT_PROGRAM: QUIT
 {
   commandFlag=6;
 };
 
-DEMO_SETUP: DEMOSETUP
+SETUP_DEMO: SETUPDEMO
 {
   commandFlag=7;
 };

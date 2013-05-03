@@ -24,6 +24,8 @@ streambuf * buf= std::cout.rdbuf();
 ofstream of;
 ostream out(buf);
 
+Statistics stats; // used in a4-2utils.h
+
 // Extern variables from yacc
 extern struct FuncOperator *finalfunc;
 extern FILE *yyin;
