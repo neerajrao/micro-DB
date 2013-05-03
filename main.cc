@@ -5,6 +5,8 @@
 #include "a3utils.h"
 #include <cstdio>
 #include <fstream>
+#include <boost/timer.hpp>
+using namespace boost;
 
 /*------------------------------------------------------------------------------
  * Create the database. Called if user specifies CREATE TABLE on command input
@@ -244,6 +246,7 @@ void Qrenaming(){
 
 int main () {
   setup ();
+  timer t;
   bool performExecution = true;
   while(1){
     cout << "--------------------------------------------" << endl;
@@ -253,7 +256,7 @@ int main () {
     cout << "--------------------------------------------" << endl;
 
     yyparse();
-
+    t.restart();
     /* *****************************************
      * 1 if the command is a create table command.
      * 2 if the command is an Insert into command
@@ -307,6 +310,8 @@ int main () {
        cout << "ERROR: Please check your command syntax." << endl;
        break;
     }
+
+    cout<<"time elapsed: "<<t.elapsed()<<"s. "<<endl;
     commandFlag=-1;
   }
 
